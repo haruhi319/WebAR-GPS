@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebAR GPS型AR</title>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js/aframe/build/aframe-ar.js"></script>
+</head>
+<body>
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+    <!-- ARコンテンツをここに追加 -->
+    <a-marker preset="hiro">
+      <a-box color="red" position="0 0.5 0" scale="2 1 1"></a-box>
+    </a-marker>
+  </a-scene>
+
+  <div id="message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border: 2px solid black; display: none;">
+    <p id="messageText"></p>
+  </div>
+
+  <script>
+    // 緯度経度の設定
+    const targetLatitude = 35.614736; // 例: 東京の緯度
+    const targetLongitude = 139.719259; // 例: 東京の経度
+    const targetRadius = 10; // 範囲の半径 (メートル)
+
+    // GPS位置の更新
+    function updateGPSPosition(position) {
+      const { latitude, longitude } = position.coords;
+      const distance = calculateDistance(latitude, longitude, targetLatitude, targetLongitude);
+
+      // 範囲内に入っているかどうかでメッセージを更新
+      if (distance <= targetRadius) {
+        showMessage("範囲内に入りました！");
+      } else {
+        showMessage("範囲外です。");
+      }
+    }
+
+    // メッセージを表示する関数
+    function showMessage(message) {
+      document.getElementById('messageText').innerText = message;
+      document.getElementById('message').style.display = 'block';
+    }
+
+    // 2つの緯度経度の距離を計算する関数
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // meters
+      const φ1 = lat1 * Math.PI / 180; // φ, λ in radians
+      const φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180;
+      const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      const d = R * c; // in meters
+      return d;
+    }
+
+    // エラー処理
+    function showError(error) {
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          console.error("User denied the request for Geolocation.");
+          break;
+        case error.POSITION_UNAVAILABLE:
+          console.error("Location information is unavailable.");
+          break;
+        case error.TIMEOUT:
+          console.error("The request to get user location timed out.");
+          break;
+        case error.UNKNOWN_ERROR:
+          console.error("An unknown error occurred.");
+          break;
+      }
+    }
+
+    // GPS位置の取得
+    navigator.geolocation.watchPosition(updateGPSPosition, showError);
+  </script>
+</body>
+</html>
