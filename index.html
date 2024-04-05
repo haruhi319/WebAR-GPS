@@ -13,20 +13,23 @@
     </a-marker>
   </a-scene>
 
-  <div id="message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border: 2px solid black; display: none;">
-    <p id="messageText"></p>
+  <div id="message" style="position: absolute; bottom: 10px; right: 10px; background-color: white; padding: 10px; border: 2px solid black;">
+    <p id="locationInfo">自分の位置: <span id="currentLocation"></span><br>ターゲットの位置: <span id="targetLocation">35.681236, 139.767125</span></p>
   </div>
 
   <script>
     // 緯度経度の設定
-    const targetLatitude = 35.668285; // 例: 東京の緯度
-    const targetLongitude = 139.791760; // 例: 東京の経度
+    const targetLatitude = 35.668253; // 例: 東京の緯度
+    const targetLongitude = 139.791789; // 例: 東京の経度
     const targetRadius = 10; // 範囲の半径 (メートル)
 
     // GPS位置の更新
     function updateGPSPosition(position) {
       const { latitude, longitude } = position.coords;
       const distance = calculateDistance(latitude, longitude, targetLatitude, targetLongitude);
+
+      // 位置情報を画面に表示
+      document.getElementById('currentLocation').innerText = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
 
       // 範囲内に入っているかどうかでメッセージを更新
       if (distance <= targetRadius) {
