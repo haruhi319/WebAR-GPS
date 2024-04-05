@@ -4,6 +4,19 @@
   <title>WebAR GPS型AR</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js/aframe/build/aframe-ar.js"></script>
+  <style>
+    /* メッセージのスタイリング */
+    #message {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background-color: white;
+      padding: 10px;
+      border: 2px solid black;
+      display: none;
+      z-index: 9999; /* メッセージを最前面に表示 */
+    }
+  </style>
 </head>
 <body>
   <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
@@ -13,10 +26,12 @@
     </a-marker>
   </a-scene>
 
-  <div id="message" style="position: absolute; bottom: 10px; right: 10px; background-color: white; padding: 10px; border: 2px solid black; display: none;">
+  <!-- メッセージを表示する要素 -->
+  <div id="message">
     <p id="messageText"></p>
   </div>
 
+  <!-- 位置情報を表示する要素 -->
   <div id="locationInfo" style="position: absolute; bottom: 10px; left: 10px; background-color: white; padding: 10px; border: 2px solid black;">
     <p>自分の位置: <span id="currentLocation"></span><br>ターゲットの位置: <span id="targetLocation">35.681236, 139.767125</span></p>
   </div>
@@ -45,47 +60,4 @@
 
     // メッセージを表示する関数
     function showMessage(message) {
-      document.getElementById('messageText').innerText = message;
-      document.getElementById('message').style.display = 'block';
-    }
-
-    // 2つの緯度経度の距離を計算する関数
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3; // meters
-      const φ1 = lat1 * Math.PI / 180; // φ, λ in radians
-      const φ2 = lat2 * Math.PI / 180;
-      const Δφ = (lat2 - lat1) * Math.PI / 180;
-      const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-        Math.cos(φ1) * Math.cos(φ2) *
-        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-      const d = R * c; // in meters
-      return d;
-    }
-
-    // エラー処理
-    function showError(error) {
-      switch(error.code) {
-        case error.PERMISSION_DENIED:
-          console.error("User denied the request for Geolocation.");
-          break;
-        case error.POSITION_UNAVAILABLE:
-          console.error("Location information is unavailable.");
-          break;
-        case error.TIMEOUT:
-          console.error("The request to get user location timed out.");
-          break;
-        case error.UNKNOWN_ERROR:
-          console.error("An unknown error occurred.");
-          break;
-      }
-    }
-
-    // GPS位置の取得
-    navigator.geolocation.watchPosition(updateGPSPosition, showError);
-  </script>
-</body>
-</html>
+      d
