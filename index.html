@@ -5,24 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GPS AR Cylinder</title>
   <style>
-    body { margin: 0; }
+    body { margin: 0; overflow: hidden; }
     canvas { display: block; }
+    video { display: none; } /* カメラ映像はThree.js内で使用するため非表示 */
   </style>
 </head>
 <body>
+  <video id="video" autoplay playsinline></video> <!-- カメラ映像のためのビデオ要素 -->
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     let scene, camera, renderer, cylinder;
-    const targetLat = 35.6680; // 緯度 (例: 東京)
-    const targetLon = 139.7914; // 経度 (例: 東京)
+    const targetLat = 35.6895; // 緯度 (例: 東京)
+    const targetLon = 139.6917; // 経度 (例: 東京)
     const radius = 100; // 自身を中心とした半径100mの範囲
+    let videoTexture;
 
     function init() {
+      // シーンとカメラの設定
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
+
+      // ビデオストリームをテクスチャとして設定
+      const video = document.getElementById('video');
+      videoTexture = new THREE.VideoTexture(video);
+      scene.background = videoTexture; // カメラ映像を背景に設定
 
       // 半透明の赤い円筒を作成
       const geometry = new THREE.CylinderGeometry(3, 3, 50, 32);
@@ -42,6 +52,25 @@
     function animate() {
       requestAnimationFrame(animate);
       renderer.render(scene, camera);
+    }
+
+    // カメラの映像を取得する関数
+    function startVideoStream() {
+      const constraints = {
+        video: {
+          facingMode: 'environment' // 背面カメラを使用
+        }
+      };
+
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then((stream) => {
+          const video = document.getElementById('video');
+          video.srcObject = stream;
+          video.play();
+        })
+        .catch((error) => {
+          console.error('カメラの起動に失敗しました:', error);
+        });
     }
 
     // 距離計算関数（Haversineの公式）
@@ -87,6 +116,7 @@
 
     // 初期化
     init();
+    startVideoStream(); // カメラの映像をスタート
   </script>
 </body>
 </html>
