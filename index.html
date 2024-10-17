@@ -99,8 +99,11 @@
         // 矢印の向きをオブジェクトの位置に向ける
         const direction = new THREE.Vector3().subVectors(cylinder.position, camera.position).normalize();
         arrow.position.copy(camera.position);
-        arrow.position.z -= 10; // カメラの前方に配置
+        arrow.position.z -= 5; // カメラの前方に配置
         arrow.lookAt(cylinder.position); // 矢印が円筒の位置を向くように
+
+        // 円筒のY座標を維持する
+        cylinder.position.y = cylinderHeight / 2; //円筒の底面を地面に合わせる
       }
     }
 
