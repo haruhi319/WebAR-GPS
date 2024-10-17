@@ -50,7 +50,7 @@
       scene.background = videoTexture; // カメラ映像を背景に設定
 
       // 半透明の赤い円筒を作成
-      const geometry = new THREE.CylinderGeometry(3, 3, 50, 32);
+      const geometry = new THREE.CylinderGeometry(10, 10, 100, 32);
       const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
       cylinder = new THREE.Mesh(geometry, material);
       scene.add(cylinder);
