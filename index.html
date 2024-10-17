@@ -59,7 +59,8 @@
       const targetPosition = latLonToVector3(targetLat, targetLon);
       cylinder.position.copy(targetPosition);
 
-      camera.position.z = 150;
+      // カメラを円筒に近づけるために距離を調整
+      camera.position.z = 200;
 
       // レンダリング
       animate();
@@ -107,7 +108,7 @@
 
     // 緯度経度をThree.jsの3D座標に変換する関数
     function latLonToVector3(lat, lon) {
-      const radius = 6371e3; // 地球の半径 (メートル)
+      const radius = 6371e3 / 10000; // 地球の半径を縮小 (スケールダウン)
       const φ = lat * Math.PI / 180;
       const λ = lon * Math.PI / 180;
 
