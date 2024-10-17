@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GPS AR Cylinder</title>
+  <title>GPS AR Cylinder with Arrow</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -32,7 +32,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    let scene, camera, renderer, cylinder;
+    let scene, camera, renderer, cylinder, arrow;
     const targetLat = 35.6684025; // 緯度 (例: 東京)
     const targetLon = 139.7919404; // 経度 (例: 東京)
     const radius = 100; // 自身を中心とした半径100mの範囲
@@ -63,6 +63,9 @@
       targetPosition.y = cylinderHeight / 2; // 円筒が地面から生えるようにY座標を調整
       cylinder.position.copy(targetPosition);
 
+      // 矢印を作成
+      createArrow();
+
       // カメラを円筒に近づけるために距離を調整
       camera.position.z = 200;
 
@@ -73,9 +76,31 @@
       animate();
     }
 
+    function createArrow() {
+      const arrowLength = 15; // 矢印の長さ
+      const arrowWidth = 3; // 矢印の太さ
+
+      const arrowGeometry = new THREE.CylinderGeometry(arrowWidth, 0, arrowLength, 8);
+      const arrowMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // 矢印の色を黄色に
+      arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
+      arrow.rotation.x = Math.PI / 2; // 矢印を立てる
+      scene.add(arrow);
+    }
+
     function animate() {
       requestAnimationFrame(animate);
       renderer.render(scene, camera);
+      updateArrow(); // 矢印を更新
+    }
+
+    function updateArrow() {
+      if (cylinder.visible) {
+        // 矢印の向きをオブジェクトの位置に向ける
+        const direction = new THREE.Vector3().subVectors(cylinder.position, camera.position).normalize();
+        arrow.position.copy(camera.position);
+        arrow.position.z -= 10; // カメラの前方に配置
+        arrow.lookAt(cylinder.position); // 矢印が円筒の位置を向くように
+      }
     }
 
     // カメラの映像を取得する関数
@@ -150,36 +175,31 @@
             cylinder.visible = false;
             document.getElementById('inRange').textContent = 'いいえ'; // 範囲外
           }
+
+          // カメラの方向を表示
+          document.getElementById('cameraOrientation').textContent = `Alpha: ${camera.rotation.y.toFixed(2)}`;
+
+        }, (error) => {
+          console.error('位置情報の取得に失敗しました:', error);
         });
-      } else {
-        console.error('位置情報を取得できません');
       }
     }
 
-    // デバイスの向きを反映してカメラの回転を制御
+    // デバイスの方向を取得する関数
     function handleOrientation(event) {
-      const alpha = event.alpha ? THREE.Math.degToRad(event.alpha) : 0; // Z軸 (地磁気の方位角)
-      const beta = event.beta ? THREE.Math.degToRad(event.beta) : 0;    // X軸 (デバイスの前後の傾き)
-      const gamma = event.gamma ? THREE.Math.degToRad(event.gamma) : 0; // Y軸 (デバイスの左右の傾き)
+      const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
+      const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
+      const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
 
-      camera.rotation.set(beta, gamma, alpha, 'YXZ');
-
-      // カメラ方向の情報を表示
-      document.getElementById('cameraOrientation').textContent = `alpha: ${event.alpha ? event.alpha.toFixed(2) : '不明'}, beta: ${event.beta ? event.beta.toFixed(2) : '不明'}, gamma: ${event.gamma ? event.gamma.toFixed(2) : '不明'}`;
+      // カメラの回転を更新
+      camera.setRotationFromEuler(new THREE.Euler(beta, alpha, -gamma, 'YXZ'));
+      checkPosition(); // ユーザーの位置をチェック
     }
 
-    // ウィンドウサイズが変更された時にレンダラーのサイズを更新
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    // 初期化とビデオストリームの開始
-    init();
+    // ビデオストリームを開始
     startVideoStream();
-    setInterval(checkPosition, 3000); // 定期的に位置をチェック
+    // 初期化
+    init();
   </script>
 </body>
 </html>
-
