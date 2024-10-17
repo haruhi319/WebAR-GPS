@@ -36,6 +36,8 @@
     const targetLat = 35.6684025; // 緯度 (例: 東京)
     const targetLon = 139.7919404; // 経度 (例: 東京)
     const radius = 100; // 自身を中心とした半径100mの範囲
+    const cylinderHeight = 100; // 円筒の高さ
+    const cylinderRadius = 10; // 円筒の半径
 
     function init() {
       // シーンとカメラの設定
@@ -51,13 +53,14 @@
       scene.background = videoTexture; // カメラ映像を背景に設定
 
       // 半透明の赤い円筒を作成
-      const geometry = new THREE.CylinderGeometry(10, 10, 100, 32);
+      const geometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
       const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
       cylinder = new THREE.Mesh(geometry, material);
       scene.add(cylinder);
 
       // オブジェクトの緯度経度を3D座標に変換して固定
       const targetPosition = latLonToVector3(targetLat, targetLon);
+      targetPosition.y = cylinderHeight / 2; // 円筒が地面から生えるようにY座標を調整
       cylinder.position.copy(targetPosition);
 
       // カメラを円筒に近づけるために距離を調整
@@ -117,8 +120,8 @@
       const λ = lon * Math.PI / 180;
 
       const x = radius * Math.cos(φ) * Math.cos(λ);
-      const y = radius * Math.sin(φ);
       const z = radius * Math.cos(φ) * Math.sin(λ);
+      const y = radius * Math.sin(φ); // y座標は緯度を基に計算
 
       return new THREE.Vector3(x, y, z);
     }
@@ -179,3 +182,4 @@
   </script>
 </body>
 </html>
+
