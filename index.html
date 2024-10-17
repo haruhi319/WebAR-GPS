@@ -1,63 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>WebAR GPS型AR</title>
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js/aframe/build/aframe-ar.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPS AR Cylinder</title>
   <style>
-    /* メッセージのスタイリング */
-    #message {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background-color: white;
-      padding: 10px;
-      border: 2px solid black;
-      display: none;
-      z-index: 9999; /* メッセージを最前面に表示 */
-    }
+    body { margin: 0; }
+    canvas { display: block; }
   </style>
 </head>
 <body>
-  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-    <!-- ARコンテンツをここに追加 -->
-    <a-marker preset="hiro">
-      <a-box position="-1 0.5 1" rotation="0 45 0" color="#4CC3D9"></a-box>
-    </a-marker>
-  </a-scene>
-
-  <!-- メッセージを表示する要素 -->
-  <div id="message">
-    <p id="messageText"></p>
-  </div>
-
-  <!-- 位置情報を表示する要素 -->
-  <div id="locationInfo" style="position: absolute; bottom: 10px; left: 10px; background-color: white; padding: 10px; border: 2px solid black;">
-    <p>自分の位置: <span id="currentLocation"></span><br>ターゲットの位置: <span id="targetLocation">35.681236, 139.767125</span></p>
-  </div>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    // 緯度経度の設定
-    const targetLatitude = 35.6681634; // 例: 東京の緯度
-    const targetLongitude = 139.7917795; // 例: 東京の経度
-    const targetRadius = 10; // 範囲の半径 (メートル)
+    let scene, camera, renderer, cylinder;
+    const targetLat = 35.6680; // 緯度 (例: 東京)
+    const targetLon = 139.7914; // 経度 (例: 東京)
+    const radius = 100; // 自身を中心とした半径100mの範囲
 
-    // GPS位置の更新
-    function updateGPSPosition(position) {
-      const { latitude, longitude } = position.coords;
-      const distance = calculateDistance(latitude, longitude, targetLatitude, targetLongitude);
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
 
-      // 位置情報を画面に表示
-      document.getElementById('currentLocation').innerText = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+      // 半透明の赤い円筒を作成
+      const geometry = new THREE.CylinderGeometry(3, 3, 50, 32);
+      const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
+      cylinder = new THREE.Mesh(geometry, material);
+      scene.add(cylinder);
 
-      // 範囲内に入っているかどうかでメッセージを更新
-      if (distance <= targetRadius) {
-        showMessage("範囲内に入りました！");
+      // 初期位置を外しておく（出現条件を満たしたときに配置）
+      cylinder.position.set(0, -1000, 0); 
+
+      camera.position.z = 150;
+
+      // レンダリング
+      animate();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+
+    // 距離計算関数（Haversineの公式）
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // 地球の半径 (メートル)
+      const φ1 = lat1 * Math.PI / 180;
+      const φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180;
+      const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      return R * c; // 距離 (メートル)
+    }
+
+    // ユーザーの位置を取得し、円筒を出現させるか判定
+    function checkPosition() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          const userLat = position.coords.latitude;
+          const userLon = position.coords.longitude;
+
+          const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
+
+          if (distance <= radius) {
+            // 半径100m以内なら円筒を表示
+            cylinder.position.set(0, 0, 0); // 円筒の表示位置をリセット
+          } else {
+            // 円筒を非表示（位置を下げて見えなくする）
+            cylinder.position.set(0, -1000, 0);
+          }
+        });
       } else {
-        showMessage("範囲外です。");
+        alert("Geolocation is not supported by this browser.");
       }
     }
 
-    // メッセージを表示する関数
-    function showMessage(message) {
-      d
+    // 定期的に位置をチェック
+    setInterval(checkPosition, 5000); // 5秒ごとに位置を確認
+
+    // 初期化
+    init();
+  </script>
+</body>
+</html>
