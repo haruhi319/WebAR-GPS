@@ -7,17 +7,32 @@
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
-    video { display: none; } /* カメラ映像はThree.js内で使用するため非表示 */
+    video { display: none; }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
   <video id="video" autoplay playsinline></video> <!-- カメラ映像のためのビデオ要素 -->
+  <div id="info">
+    <p>現在の位置: <span id="latlon"></span></p>
+    <p>オブジェクトまでの距離: <span id="distance"></span> m</p>
+    <p>範囲内: <span id="inRange"></span></p>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     let scene, camera, renderer, cylinder;
-    const targetLat = 35.6895; // 緯度 (例: 東京)
-    const targetLon = 139.6917; // 経度 (例: 東京)
+    const targetLat = 35.6684; // 緯度 (例: 東京)
+    const targetLon = 139.7919; // 経度 (例: 東京)
     const radius = 100; // 自身を中心とした半径100mの範囲
     let videoTexture;
 
@@ -89,7 +104,7 @@
       return R * c; // 距離 (メートル)
     }
 
-    // ユーザーの位置を取得し、円筒を出現させるか判定
+    // ユーザーの位置を取得し、円筒を出現させるか判定し、デバッグ情報を表示
     function checkPosition() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
@@ -98,12 +113,18 @@
 
           const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
 
+          // デバッグ情報を画面に表示
+          document.getElementById('latlon').textContent = `${userLat.toFixed(6)}, ${userLon.toFixed(6)}`;
+          document.getElementById('distance').textContent = distance.toFixed(2);
+
           if (distance <= radius) {
             // 半径100m以内なら円筒を表示
             cylinder.position.set(0, 0, 0); // 円筒の表示位置をリセット
+            document.getElementById('inRange').textContent = 'はい'; // 範囲内
           } else {
             // 円筒を非表示（位置を下げて見えなくする）
             cylinder.position.set(0, -1000, 0);
+            document.getElementById('inRange').textContent = 'いいえ'; // 範囲外
           }
         });
       } else {
