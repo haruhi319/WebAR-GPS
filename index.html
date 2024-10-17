@@ -144,25 +144,38 @@
           if (distance <= radius) {
             // 半径100m以内なら円筒を表示（すでに位置は固定済み）
             cylinder.visible = true;
-            document.getElementById('inRange').textContent = 'はい'; //
- 範囲内
+            document.getElementById('inRange').textContent = 'はい'; // 範囲内
           } else {
-            // 円筒を非表示
             cylinder.visible = false;
             document.getElementById('inRange').textContent = 'いいえ'; // 範囲外
           }
         });
       } else {
-        alert("Geolocation is not supported by this browser.");
+        console.error('位置情報を取得できません');
       }
     }
 
-    // 定期的に位置をチェック
-    setInterval(checkPosition, 5000); // 5秒ごとに位置を確認
+    // デバイスの向きを反映してカメラの回転を制御
+    function handleOrientation(event) {
+      const alpha = event.alpha ? THREE.Math.degToRad(event.alpha) : 0; // Z軸 (地磁気の方位角)
+      const beta = event.beta ? THREE.Math.degToRad(event.beta) : 0;    // X軸 (デバイスの前後の傾き)
+      const gamma = event.gamma ? THREE.Math.degToRad(event.gamma) : 0; // Y軸 (デバイスの左右の傾き)
 
-    // 初期化
+      camera.rotation.set(beta, gamma, alpha, 'YXZ');
+      document.getElementById('cameraOrientation').textContent = `alpha: ${event.alpha.toFixed(2)}, beta: ${event.beta.toFixed(2)}, gamma: ${event.gamma.toFixed(2)}`;
+    }
+
+    // ウィンドウサイズが変更された時にレンダラーのサイズを更新
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // 初期化とビデオストリームの開始
     init();
-    startVideoStream(); // カメラの映像をスタート
+    startVideoStream();
+    setInterval(checkPosition, 3000); // 定期的に位置をチェック
   </script>
 </body>
 </html>
