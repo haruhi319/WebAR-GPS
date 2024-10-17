@@ -21,18 +21,20 @@
   </style>
 </head>
 <body>
-  <video id="video" autoplay playsinline></video> <!-- カメラ映像のためのビデオ要素 -->
+  <video id="video" autoplay playsinline></video>
   <div id="info">
     <p>現在の位置: <span id="latlon"></span></p>
     <p>オブジェクトまでの距離: <span id="distance"></span> m</p>
     <p>範囲内: <span id="inRange"></span></p>
+    <p>オブジェクト位置: <span id="objectPosition"></span></p>
+    <p>カメラ方向: <span id="cameraOrientation"></span></p>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     let scene, camera, renderer, cylinder;
-    const targetLat = 35.6684; // 緯度 (例: 東京)
-    const targetLon = 139.7919; // 経度 (例: 東京)
+    const targetLat = 35.6684025; // 緯度 (例: 東京)
+    const targetLon = 139.7919404; // 経度 (例: 東京)
     const radius = 100; // 自身を中心とした半径100mの範囲
     let videoTexture;
 
@@ -61,6 +63,9 @@
 
       // カメラを円筒に近づけるために距離を調整
       camera.position.z = 200;
+
+      // デバイスの向きに応じたカメラの更新
+      window.addEventListener('deviceorientation', handleOrientation);
 
       // レンダリング
       animate();
@@ -132,10 +137,15 @@
           document.getElementById('latlon').textContent = `${userLat.toFixed(6)}, ${userLon.toFixed(6)}`;
           document.getElementById('distance').textContent = distance.toFixed(2);
 
+          // オブジェクトの3D座標をデバッグ表示
+          const objectPosition = cylinder.position;
+          document.getElementById('objectPosition').textContent = `x: ${objectPosition.x.toFixed(2)}, y: ${objectPosition.y.toFixed(2)}, z: ${objectPosition.z.toFixed(2)}`;
+
           if (distance <= radius) {
             // 半径100m以内なら円筒を表示（すでに位置は固定済み）
             cylinder.visible = true;
-            document.getElementById('inRange').textContent = 'はい'; // 範囲内
+            document.getElementById('inRange').textContent = 'はい'; //
+ 範囲内
           } else {
             // 円筒を非表示
             cylinder.visible = false;
