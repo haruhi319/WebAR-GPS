@@ -18,6 +18,19 @@
       font-family: Arial, sans-serif;
       z-index: 1;
     }
+    #permissionButton {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      display: none;
+      z-index: 2;
+    }
   </style>
 </head>
 <body>
@@ -28,6 +41,7 @@
     <p>範囲内: <span id="inRange"></span></p>
     <p>オブジェクト位置: <span id="objectLatLon"></span></p>
   </div>
+  <button id="permissionButton">デバイスの方向センサーを許可</button>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
@@ -59,8 +73,8 @@
       // カメラのデフォルト位置
       camera.position.z = 100;
 
-      // デバイスの向きイベントリスナー
-      window.addEventListener('deviceorientationabsolute', handleOrientation);
+      // デバイスの方向イベントリスナーを追加
+      requestDeviceOrientationPermission();
 
       // ユーザー位置の取得を開始
       startVideoStream();
@@ -133,6 +147,31 @@
             cylinder.visible = false;
           }
         });
+      }
+    }
+
+    // デバイスの方向センサーへのアクセスを要求する関数
+    function requestDeviceOrientationPermission() {
+      const permissionButton = document.getElementById('permissionButton');
+
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // iOS 13以降でのアクセス許可リクエスト
+        permissionButton.style.display = 'block';
+        permissionButton.addEventListener('click', () => {
+          DeviceOrientationEvent.requestPermission()
+            .then((response) => {
+              if (response === 'granted') {
+                window.addEventListener('deviceorientation', handleOrientation);
+                permissionButton.style.display = 'none';
+              } else {
+                alert('方向センサーへのアクセスが許可されませんでした。');
+              }
+            })
+            .catch(console.error);
+        });
+      } else {
+        // 他のブラウザでは直接アクセス
+        window.addEventListener('deviceorientation', handleOrientation);
       }
     }
 
