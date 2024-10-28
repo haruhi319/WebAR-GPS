@@ -70,9 +70,6 @@
       cylinder = new THREE.Mesh(geometry, material);
       scene.add(cylinder);
 
-      // 円筒の回転を地面に垂直にする
-      cylinder.rotation.x = Math.PI / 2;
-
       // カメラのデフォルト位置
       camera.position.z = 100;
 
@@ -123,10 +120,10 @@
 
     // 緯度経度を3D座標に変換する関数（相対位置）
     function latLonToRelativePosition(userLat, userLon, targetLat, targetLon) {
-      const scale = 0.00001; // スケール調整
+      const scale = 0.001; // スケール調整
       const dX = (targetLon - userLon) * scale * 6371e3 * Math.cos(userLat * Math.PI / 180);
       const dZ = (targetLat - userLat) * scale * 6371e3;
-      return new THREE.Vector3(dX, cylinderHeight / 2, dZ);
+      return new THREE.Vector3(dX, 0, dZ); // 円筒の中心を地面に合わせる
     }
 
     // 位置情報とオブジェクト位置を確認
@@ -178,13 +175,16 @@
       }
     }
 
-    // デバイスの向き情報でカメラを回転
+    // デバイスの向き情報でカメラを回転し、円筒が垂直に固定されるよう調整
     function handleOrientation(event) {
       const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
       const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
       const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
 
       camera.rotation.set(beta, alpha, -gamma, 'YXZ');
+
+      // 円筒の回転をカメラの影響を受けないようにする
+      cylinder.rotation.set(Math.PI / 2, 0, 0);
     }
 
     init();
