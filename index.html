@@ -1,193 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GPS AR Cylinder Fixed to World Position</title>
+  <title>GPS AR Demo</title>
+  <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
-    video { display: none; }
-    #info {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: white;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 10px;
-      font-family: Arial, sans-serif;
-      z-index: 1;
-    }
-    #permissionButton {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      display: none;
-      z-index: 2;
-    }
   </style>
 </head>
-<body>
-  <video id="video" autoplay playsinline></video>
-  <div id="info">
-    <p>現在の位置: <span id="latlon"></span></p>
-    <p>オブジェクトまでの距離: <span id="distance"></span> m</p>
-    <p>範囲内: <span id="inRange"></span></p>
-    <p>オブジェクト位置: <span id="objectLatLon"></span></p>
-  </div>
-  <button id="permissionButton">デバイスの方向センサーを許可</button>
+<body style="margin: 0; overflow: hidden;">
+  <a-scene
+    embedded
+    arjs="sourceType: webcam; debugUIEnabled: false;"
+  >
+    <a-camera gps-camera rotation-reader></a-camera>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- 指定した緯度経度の位置に円筒を配置 -->
+    <a-cylinder
+      position="0 0 0"
+      radius="1"
+      height="3"
+      color="red"
+      gps-entity-place="latitude: 35.6684025; longitude: 139.7919404;"
+    ></a-cylinder>
+
+    <!-- カメラの向きを示すテキスト -->
+    <a-text
+      value="カメラの方向を確認"
+      look-at="[gps-camera]"
+      scale="5 5 5"
+      position="0 4 -5"
+    ></a-text>
+  </a-scene>
+
   <script>
-    let scene, camera, renderer, cylinder;
-    const targetLat = 35.6689265; // 対象の緯度
-    const targetLon = 139.7918125; // 対象の経度
-    const radius = 100; // 表示される範囲の半径（メートル）
-    const cylinderHeight = 200; // 円筒の高さ
-    const cylinderRadius = 20; // 円筒の半径
+    // 緯度経度を3D座標に変換する関数
+    function latLonToVector3(lat, lon) {
+      const scale = 0.00001; // スケールを調整
+      const R = 6371e3; // 地球の半径 (メートル)
+      const φ = lat * Math.PI / 180; // 緯度をラジアンに変換
+      const λ = lon * Math.PI / 180; // 経度をラジアンに変換
 
-    function init() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
+      const x = R * λ * Math.cos(φ); // 緯度経度からX座標を計算
+      const y = 0; // Y座標は地面と一致
+      const z = R * φ; // 緯度経度からZ座標を計算
 
-      // ビデオストリームをテクスチャとして背景に設定
-      const video = document.getElementById('video');
-      const videoTexture = new THREE.VideoTexture(video);
-      scene.background = videoTexture;
-
-      // 半透明の赤い円筒を作成
-      const geometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
-      const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
-      cylinder = new THREE.Mesh(geometry, material);
-      scene.add(cylinder);
-
-      // 円筒の回転を地面に垂直にする
-      cylinder.rotation.x = Math.PI / 2;
-
-      // カメラのデフォルト位置
-      camera.position.z = 100;
-
-      // デバイスの方向イベントリスナーを追加
-      requestDeviceOrientationPermission();
-
-      // ユーザー位置の取得を開始
-      startVideoStream();
-      setInterval(checkPosition, 3000);
-      
-      // レンダリングループ
-      animate();
+      return new THREE.Vector3(x * scale, y, z * scale); // スケールを適用して3D座標を返す
     }
-
-    function animate() {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    }
-
-    function startVideoStream() {
-      const constraints = { video: { facingMode: 'environment' } };
-      navigator.mediaDevices.getUserMedia(constraints)
-        .then((stream) => {
-          const video = document.getElementById('video');
-          video.srcObject = stream;
-          video.play();
-        })
-        .catch((error) => {
-          console.error('カメラの起動に失敗しました:', error);
-        });
-    }
-
-    // 距離計算（Haversineの公式）
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3; // 地球の半径（メートル）
-      const φ1 = lat1 * Math.PI / 180;
-      const φ2 = lat2 * Math.PI / 180;
-      const Δφ = (lat2 - lat1) * Math.PI / 180;
-      const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-      return R * c;
-    }
-
-    // 緯度経度を3D座標に変換する関数（相対位置）
-    function latLonToRelativePosition(userLat, userLon, targetLat, targetLon) {
-      const scale = 0.01; // スケール調整
-      const dX = (targetLon - userLon) * scale * 6371e3 * Math.cos(userLat * Math.PI / 180);
-      const dZ = (targetLat - userLat) * scale * 6371e3;
-      return new THREE.Vector3(dX, cylinderHeight / 2, dZ);
-    }
-
-    // 位置情報とオブジェクト位置を確認
-    function checkPosition() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-          const userLat = position.coords.latitude;
-          const userLon = position.coords.longitude;
-          const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
-
-          document.getElementById('latlon').textContent = `${userLat.toFixed(6)}, ${userLon.toFixed(6)}`;
-          document.getElementById('distance').textContent = distance.toFixed(2);
-          document.getElementById('objectLatLon').textContent = `${targetLat.toFixed(6)}, ${targetLon.toFixed(6)}`;
-          document.getElementById('inRange').textContent = distance <= radius ? 'はい' : 'いいえ';
-
-          if (distance <= radius) {
-            cylinder.visible = true;
-            const targetPosition = latLonToRelativePosition(userLat, userLon, targetLat, targetLon);
-            cylinder.position.copy(targetPosition);
-          } else {
-            cylinder.visible = false;
-          }
-        });
-      }
-    }
-
-    // デバイスの方向センサーへのアクセスを要求する関数
-    function requestDeviceOrientationPermission() {
-      const permissionButton = document.getElementById('permissionButton');
-
-      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        // iOS 13以降でのアクセス許可リクエスト
-        permissionButton.style.display = 'block';
-        permissionButton.addEventListener('click', () => {
-          DeviceOrientationEvent.requestPermission()
-            .then((response) => {
-              if (response === 'granted') {
-                window.addEventListener('deviceorientation', handleOrientation);
-                permissionButton.style.display = 'none';
-              } else {
-                alert('方向センサーへのアクセスが許可されませんでした。');
-              }
-            })
-            .catch(console.error);
-        });
-      } else {
-        // 他のブラウザでは直接アクセス
-        window.addEventListener('deviceorientation', handleOrientation);
-      }
-    }
-
-    // デバイスの向き情報でカメラを回転
-    function handleOrientation(event) {
-      const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
-      const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
-      const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
-
-      camera.rotation.set(beta, alpha, -gamma, 'YXZ');
-    }
-
-    init();
   </script>
 </body>
 </html>
