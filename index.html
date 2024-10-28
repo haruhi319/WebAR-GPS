@@ -158,52 +158,54 @@
     // ユーザーの位置を取得し、円筒を出現させるか判定し、デバッグ情報を表示
     function checkPosition() {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-          const userLat = position.coords.latitude;
-          const userLon = position.coords.longitude;
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
 
-          const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
+            const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
 
-          // デバッグ情報を画面に表示
-          document.getElementById('latlon').textContent = `${userLat.toFixed(6)}, ${userLon.toFixed(6)}`;
-          document.getElementById('distance').textContent = distance.toFixed(2);
+            // デバッグ情報を画面に表示
+            document.getElementById('latlon').textContent = `${userLat.toFixed(6)}, ${userLon.toFixed(6)}`;
+            document.getElementById('distance').textContent = distance.toFixed(2);
+            document.getElementById('objectLatLon').textContent = `${targetLat.toFixed(6)}, ${targetLon.toFixed(6)}`;
 
-          // オブジェクトの緯度経度を表示
-          document.getElementById('objectLatLon').textContent = `${targetLat.toFixed(6)}, ${targetLon.toFixed(6)}`;
+            // 距離範囲内なら表示
+            if (distance <= radius) {
+              cylinder.visible = true;
+              document.getElementById('inRange').textContent = 'はい';
+            } else {
+              cylinder.visible = false;
+              document.getElementById('inRange').textContent = 'いいえ';
+            }
 
-          if (distance <= radius) {
-            // 半径100m以内なら円筒を表示（すでに位置は固定済み）
-            cylinder.visible = true;
-            document.getElementById('inRange').textContent = 'はい'; // 範囲内
-          } else {
-            cylinder.visible = false;
-            document.getElementById('inRange').textContent = 'いいえ'; // 範囲外
+            document.getElementById('cameraOrientation').textContent = `Alpha: ${camera.rotation.y.toFixed(2)}`;
+          },
+          (error) => {
+            console.error('位置情報の取得に失敗しました:', error);
+            alert('位置情報の取得が拒否されたか、エラーが発生しました。設定を確認してください。');
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
           }
-
-          // カメラの方向を表示
-          document.getElementById('cameraOrientation').textContent = `Alpha: ${camera.rotation.y.toFixed(2)}`;
-
-        }, (error) => {
-          console.error('位置情報の取得に失敗しました:', error);
-        });
+        );
+      } else {
+        alert("このデバイスでは位置情報の取得がサポートされていません。");
       }
     }
 
-    // デバイスの方向を取得する関数
+    // デバイスの向きに応じたカメラの回転を更新
     function handleOrientation(event) {
-      const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
-      const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
-      const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
-
-      // カメラの回転を更新
-      camera.setRotationFromEuler(new THREE.Euler(beta, alpha, -gamma, 'YXZ'));
-      checkPosition(); // ユーザーの位置をチェック
+      const alpha = event.alpha ? THREE.Math.degToRad(event.alpha) : 0;
+      camera.rotation.y = alpha;
     }
 
-    // ビデオストリームを開始
-    startVideoStream();
     // 初期化
     init();
+    startVideoStream();
+    setInterval(checkPosition, 3000); // 位置情報を3秒ごとに取得
   </script>
 </body>
 </html>
