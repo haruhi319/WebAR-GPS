@@ -123,7 +123,7 @@
 
     // 緯度経度を3D座標に変換する関数（相対位置）
     function latLonToRelativePosition(userLat, userLon, targetLat, targetLon) {
-      const scale = 1; // スケール調整
+      const scale = 0.1; // スケール調整
       const dX = (targetLon - userLon) * scale * 6371e3 * Math.cos(userLat * Math.PI / 180);
       const dZ = (targetLat - userLat) * scale * 6371e3;
       return new THREE.Vector3(dX, cylinderHeight / 2, dZ);
