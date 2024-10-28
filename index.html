@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GPS AR Cylinder with Arrow</title>
+  <title>GPS AR Cylinder with Fixed Position</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -27,94 +27,56 @@
     <p>オブジェクトまでの距離: <span id="distance"></span> m</p>
     <p>範囲内: <span id="inRange"></span></p>
     <p>オブジェクト位置: <span id="objectLatLon"></span></p>
-    <p>カメラ方向: <span id="cameraOrientation"></span></p>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    let scene, camera, renderer, cylinder, arrow;
-    const targetLat = 35.6684025; // 緯度 (例: 東京)
-    const targetLon = 139.7919404; // 経度 (例: 東京)
-    const radius = 100; // 自身を中心とした半径100mの範囲
-    const cylinderHeight = 200; // 円筒の高さ
-    const cylinderRadius = 20; // 円筒の半径
+    let scene, camera, renderer, cylinder;
+    const targetLat = 35.6684025; // Target latitude
+    const targetLon = 139.7919404; // Target longitude
+    const radius = 100; // Range radius (meters)
+    const cylinderHeight = 200; // Cylinder height (meters)
+    const cylinderRadius = 20; // Cylinder radius (meters)
 
     function init() {
-      // シーンとカメラの設定
+      // Set up scene and camera
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      // ビデオストリームをテクスチャとして設定
+      // Video stream texture
       const video = document.getElementById('video');
       const videoTexture = new THREE.VideoTexture(video);
-      scene.background = videoTexture; // カメラ映像を背景に設定
+      scene.background = videoTexture;
 
-      // 半透明の赤い円筒を作成
+      // Create the red translucent cylinder
       const geometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
       const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
       cylinder = new THREE.Mesh(geometry, material);
       scene.add(cylinder);
 
-      // オブジェクトの緯度経度を3D座標に変換して固定
-      const targetPosition = latLonToVector3(targetLat, targetLon);
-      targetPosition.y = cylinderHeight / 2; // 円筒が地面から生えるようにY座標を調整
-      cylinder.position.copy(targetPosition);
-
-      // 矢印を作成
-      createArrow();
-
-      // カメラを円筒に近づけるために距離を調整
+      // Position camera to view cylinder better
       camera.position.z = 200;
 
-      // デバイスの向きに応じたカメラの更新
-      window.addEventListener('deviceorientation', handleOrientation);
-
-      // レンダリング
+      // Begin video stream and start checking position every 3 seconds
+      startVideoStream();
+      setInterval(checkPosition, 3000);
+      
+      // Rendering loop
       animate();
-    }
-
-    function createArrow() {
-      const arrowLength = 15; // 矢印の長さ
-      const arrowWidth = 1; // 矢印の太さ
-
-      const arrowGeometry = new THREE.CylinderGeometry(arrowWidth, 0, arrowLength, 8);
-      const arrowMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // 矢印の色を黄色に
-      arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
-      arrow.rotation.x = Math.PI / 2; // 矢印を立てる
-      arrow.position.z = -10; // カメラの前方に配置
-      scene.add(arrow);
     }
 
     function animate() {
       requestAnimationFrame(animate);
       renderer.render(scene, camera);
-      updateArrow(); // 矢印を更新
     }
 
-    function updateArrow() {
-      if (cylinder.visible) {
-        // 矢印の向きをオブジェクトの位置に向ける
-        const direction = new THREE.Vector3().subVectors(cylinder.position, camera.position).normalize();
-        arrow.position.copy(camera.position);
-        arrow.position.z -= 5; // カメラの前方に配置
-        arrow.lookAt(cylinder.position); // 矢印が円筒の位置を向くように
-
-        // 円筒のY座標を維持する
-        cylinder.position.y = cylinderHeight / 2; //円筒の底面を地面に合わせる
-      }
-    }
-
-    // カメラの映像を取得する関数
     function startVideoStream() {
       const constraints = {
-        video: {
-          facingMode: 'environment' // 背面カメラを使用
-        }
+        video: { facingMode: 'environment' }
       };
-
       navigator.mediaDevices.getUserMedia(constraints)
         .then((stream) => {
           const video = document.getElementById('video');
@@ -122,13 +84,13 @@
           video.play();
         })
         .catch((error) => {
-          console.error('カメラの起動に失敗しました:', error);
+          console.error('Failed to access the camera:', error);
         });
     }
 
-    // 距離計算関数（Haversineの公式）
+    // Distance calculation (Haversine formula)
     function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3; // 地球の半径 (メートル)
+      const R = 6371e3; // Earth radius in meters
       const φ1 = lat1 * Math.PI / 180;
       const φ2 = lat2 * Math.PI / 180;
       const Δφ = (lat2 - lat1) * Math.PI / 180;
@@ -139,73 +101,55 @@
                 Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-      return R * c; // 距離 (メートル)
+      return R * c; // Distance in meters
     }
 
-    // 緯度経度をThree.jsの3D座標に変換する関数
+    // Convert lat/lon to Three.js Vector3 coordinates
     function latLonToVector3(lat, lon) {
-      const radius = 6371e3 / 10000; // 地球の半径を縮小 (スケールダウン)
+      const scale = 0.00001; // Scale down to fit scene
       const φ = lat * Math.PI / 180;
       const λ = lon * Math.PI / 180;
 
-      const x = radius * Math.cos(φ) * Math.cos(λ);
-      const z = radius * Math.cos(φ) * Math.sin(λ);
-      const y = radius * Math.sin(φ); // y座標は緯度を基に計算
+      const x = scale * Math.cos(φ) * Math.cos(λ) * 6371e3;
+      const z = scale * Math.cos(φ) * Math.sin(λ) * 6371e3;
+      const y = scale * Math.sin(φ) * 6371e3; 
 
       return new THREE.Vector3(x, y, z);
     }
 
-    // ユーザーの位置を取得し、円筒を出現させるか判定し、デバッグ情報を表示
+    // Check position every 3 seconds
     function checkPosition() {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const userLat = position.coords.latitude;
-            const userLon = position.coords.longitude;
+        navigator.geolocation.getCurrentPosition(position => {
+          const userLat = position.coords.latitude;
+          const userLon = position.coords.longitude;
+          const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
 
-            const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
+          // Update displayed information
+          document.getElementById('latlon').textContent = `${userLat.toFixed(6)}, ${userLon.toFixed(6)}`;
+          document.getElementById('distance').textContent = distance.toFixed(2);
+          document.getElementById('objectLatLon').textContent = `${targetLat.toFixed(6)}, ${targetLon.toFixed(6)}`;
+          document.getElementById('inRange').textContent = distance <= radius ? 'はい' : 'いいえ';
 
-            // デバッグ情報を画面に表示
-            document.getElementById('latlon').textContent = `${userLat.toFixed(6)}, ${userLon.toFixed(6)}`;
-            document.getElementById('distance').textContent = distance.toFixed(2);
-            document.getElementById('objectLatLon').textContent = `${targetLat.toFixed(6)}, ${targetLon.toFixed(6)}`;
-
-            // 距離範囲内なら表示
-            if (distance <= radius) {
-              cylinder.visible = true;
-              document.getElementById('inRange').textContent = 'はい';
-            } else {
-              cylinder.visible = false;
-              document.getElementById('inRange').textContent = 'いいえ';
-            }
-
-            document.getElementById('cameraOrientation').textContent = `Alpha: ${camera.rotation.y.toFixed(2)}`;
-          },
-          (error) => {
-            console.error('位置情報の取得に失敗しました:', error);
-            alert('位置情報の取得が拒否されたか、エラーが発生しました。設定を確認してください。');
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
+          // Show cylinder if within range
+          if (distance <= radius) {
+            cylinder.visible = true;
+          } else {
+            cylinder.visible = false;
           }
-        );
+
+          // Update cylinder’s fixed position on the scene
+          const targetPosition = latLonToVector3(targetLat, targetLon);
+          targetPosition.y = cylinderHeight / 2; // Adjust cylinder’s y position
+          cylinder.position.copy(targetPosition);
+        });
       } else {
         alert("このデバイスでは位置情報の取得がサポートされていません。");
       }
     }
 
-    // デバイスの向きに応じたカメラの回転を更新
-    function handleOrientation(event) {
-      const alpha = event.alpha ? THREE.Math.degToRad(event.alpha) : 0;
-      camera.rotation.y = alpha;
-    }
-
-    // 初期化
+    // Initialize the scene
     init();
-    startVideoStream();
-    setInterval(checkPosition, 3000); // 位置情報を3秒ごとに取得
   </script>
 </body>
 </html>
