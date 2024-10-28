@@ -1,40 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR.js with GPS - Cylinder Example</title>
-  <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
-  <script src="https://aframe.io/releases/1.0.4/aframe-ar.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS型AR</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/jsm/webxr/VRButton.js"></script>
 </head>
-<body style="margin: 0; overflow: hidden;">
-  <a-scene embedded arjs="sourceType: webcam;">
-    <a-assets>
-      <a-cylinder id="cylinder" radius="1" height="5" color="#ff0000" position="0 0 0"></a-cylinder>
-    </a-assets>
-    
-    <a-camera gps-camera rotation-reader></a-camera>
+<body>
+    <script>
+        let scene, camera, renderer, cylinder;
+        const targetLat = 35.6684025;
+        const targetLon = 139.7919404;
+        const earthRadius = 6371000; // 地球の半径（メートル）
+        let distanceDisplay;
 
-    <a-entity 
-      gps-entity-place="latitude: 35.6684025; longitude: 139.7919404;"
-      look-at="[gps-camera]">
-      <a-cylinder radius="1" height="5" color="#ff0000" position="0 2.5 0"></a-cylinder>
-    </a-entity>
-  </a-scene>
+        // 初期化
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+            document.body.appendChild(VRButton.createButton(renderer));
 
-  <script>
-    // GPS座標を設定
-    const targetLat = 35.6684025; // 目標の緯度
-    const targetLon = 139.7919404; // 目標の経度
+            // 円柱の作成
+            const geometry = new THREE.CylinderGeometry(0.5, 0.5, 2, 32);
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            cylinder = new THREE.Mesh(geometry, material);
+            scene.add(cylinder);
 
-    // デバイスの向きを更新
-    window.addEventListener('deviceorientation', function(event) {
-      const alpha = event.alpha; // Z軸の回転
-      const beta = event.beta; // X軸の回転
-      const gamma = event.gamma; // Y軸の回転
-      const camera = document.querySelector('a-camera');
-      camera.setAttribute('rotation', {x: beta, y: alpha, z: -gamma});
-    });
-  </script>
+            // 環境光
+            const light = new THREE.AmbientLight(0xffffff);
+            scene.add(light);
+
+            camera.position.z = 5;
+
+            // 距離表示のためのテキストエレメント
+            distanceDisplay = document.createElement('div');
+            distanceDisplay.style.position = 'absolute';
+            distanceDisplay.style.color = 'white';
+            distanceDisplay.style.fontSize = '20px';
+            distanceDisplay.style.top = '10px';
+            distanceDisplay.style.left = '10px';
+            document.body.appendChild(distanceDisplay);
+
+            // ジオロケーションAPIの利用
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(updatePosition, showError);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+
+            animate();
+        }
+
+        function updatePosition(position) {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+            const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
+            distanceDisplay.innerHTML = `距離: ${distance.toFixed(2)} m`;
+
+            // 円柱の位置を更新
+            const targetPosition = latLonToXYZ(targetLat, targetLon);
+            cylinder.position.set(targetPosition.x, targetPosition.y, targetPosition.z);
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const dLat = THREE.MathUtils.degToRad(lat2 - lat1);
+            const dLon = THREE.MathUtils.degToRad(lon2 - lon1);
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(THREE.MathUtils.degToRad(lat1)) * Math.cos(THREE.MathUtils.degToRad(lat2)) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return earthRadius * c;
+        }
+
+        function latLonToXYZ(lat, lon) {
+            const x = earthRadius * Math.cos(THREE.MathUtils.degToRad(lat)) * Math.cos(THREE.MathUtils.degToRad(lon));
+            const y = earthRadius * Math.cos(THREE.MathUtils.degToRad(lat)) * Math.sin(THREE.MathUtils.degToRad(lon));
+            const z = earthRadius * Math.sin(THREE.MathUtils.degToRad(lat));
+            return { x, y, z };
+        }
+
+        function showError(error) {
+            console.warn(`ERROR(${error.code}): ${error.message}`);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        window.onload = init;
+    </script>
 </body>
 </html>
