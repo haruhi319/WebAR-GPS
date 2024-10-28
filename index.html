@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GPS AR Fixed Cylinder</title>
+  <title>GPS AR Cylinder Fixed to World Position</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -34,33 +34,35 @@
     let scene, camera, renderer, cylinder;
     const targetLat = 35.6684025; // 対象の緯度
     const targetLon = 139.7919404; // 対象の経度
-    const radius = 100; // 範囲の半径（メートル）
+    const radius = 100; // 表示される範囲の半径（メートル）
     const cylinderHeight = 200; // 円筒の高さ
     const cylinderRadius = 20; // 円筒の半径
 
     function init() {
-      // シーンとカメラの設定
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      // ビデオストリームをテクスチャとして設定
+      // ビデオストリームをテクスチャとして背景に設定
       const video = document.getElementById('video');
       const videoTexture = new THREE.VideoTexture(video);
       scene.background = videoTexture;
 
-      // 赤い半透明の円筒を作成
+      // 半透明の赤い円筒を作成
       const geometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
       const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
       cylinder = new THREE.Mesh(geometry, material);
       scene.add(cylinder);
 
-      // カメラの位置を設定
+      // カメラのデフォルト位置
       camera.position.z = 100;
 
-      // ビデオストリームを開始し、位置を定期的に確認
+      // デバイスの向きイベントリスナー
+      window.addEventListener('deviceorientationabsolute', handleOrientation);
+
+      // ユーザー位置の取得を開始
       startVideoStream();
       setInterval(checkPosition, 3000);
       
@@ -74,9 +76,7 @@
     }
 
     function startVideoStream() {
-      const constraints = {
-        video: { facingMode: 'environment' }
-      };
+      const constraints = { video: { facingMode: 'environment' } };
       navigator.mediaDevices.getUserMedia(constraints)
         .then((stream) => {
           const video = document.getElementById('video');
@@ -101,7 +101,7 @@
                 Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-      return R * c; // 距離（メートル）
+      return R * c;
     }
 
     // 緯度経度を3D座標に変換する関数（相対位置）
@@ -109,11 +109,10 @@
       const scale = 0.00001; // スケール調整
       const dX = (targetLon - userLon) * scale * 6371e3 * Math.cos(userLat * Math.PI / 180);
       const dZ = (targetLat - userLat) * scale * 6371e3;
-
-      return new THREE.Vector3(dX, cylinderHeight / 2, dZ); // 円筒が地面から生えるようにY軸を調整
+      return new THREE.Vector3(dX, cylinderHeight / 2, dZ);
     }
 
-    // 3秒ごとに位置情報を確認する関数
+    // 位置情報とオブジェクト位置を確認
     function checkPosition() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
@@ -121,29 +120,31 @@
           const userLon = position.coords.longitude;
           const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
 
-          // 表示情報の更新
           document.getElementById('latlon').textContent = `${userLat.toFixed(6)}, ${userLon.toFixed(6)}`;
           document.getElementById('distance').textContent = distance.toFixed(2);
           document.getElementById('objectLatLon').textContent = `${targetLat.toFixed(6)}, ${targetLon.toFixed(6)}`;
           document.getElementById('inRange').textContent = distance <= radius ? 'はい' : 'いいえ';
 
-          // 範囲内であれば円筒を表示
           if (distance <= radius) {
             cylinder.visible = true;
-
-            // 円筒の位置をユーザーの位置に基づく相対座標に設定
             const targetPosition = latLonToRelativePosition(userLat, userLon, targetLat, targetLon);
             cylinder.position.copy(targetPosition);
           } else {
             cylinder.visible = false;
           }
         });
-      } else {
-        alert("このデバイスでは位置情報の取得がサポートされていません。");
       }
     }
 
-    // 初期化
+    // デバイスの向き情報でカメラを回転
+    function handleOrientation(event) {
+      const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
+      const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
+      const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
+
+      camera.rotation.set(beta, alpha, -gamma, 'YXZ');
+    }
+
     init();
   </script>
 </body>
