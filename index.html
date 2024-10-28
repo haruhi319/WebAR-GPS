@@ -70,6 +70,9 @@
       cylinder = new THREE.Mesh(geometry, material);
       scene.add(cylinder);
 
+      // 円筒の回転を地面に垂直にする
+      cylinder.rotation.x = Math.PI / 2;
+
       // カメラのデフォルト位置
       camera.position.z = 100;
 
