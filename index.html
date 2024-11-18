@@ -3,203 +3,130 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GPS AR Cylinder Fixed to World Position</title>
+  <title>AR Navigation</title>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet"></script>
   <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
-    video { display: none; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+    }
+    video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
     #info {
       position: absolute;
       top: 10px;
       left: 10px;
+      background: rgba(0, 0, 0, 0.7);
       color: white;
-      background-color: rgba(0, 0, 0, 0.5);
       padding: 10px;
+      border-radius: 5px;
       font-family: Arial, sans-serif;
-      z-index: 1;
-    }
-    #permissionButton {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      display: none;
-      z-index: 2;
     }
   </style>
 </head>
 <body>
-  <video id="video" autoplay playsinline></video>
-  <div id="info">
-    <p>現在の位置: <span id="latlon"></span></p>
-    <p>オブジェクトまでの距離: <span id="distance"></span> m</p>
-    <p>範囲内: <span id="inRange"></span></p>
-    <p>オブジェクト位置: <span id="objectLatLon"></span></p>
-  </div>
-  <button id="permissionButton">デバイスの方向センサーを許可</button>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <video id="camera" autoplay muted></video>
+  <div id="info">Loading...</div>
   <script>
-    let scene, camera, renderer, cylinder;
-    const targetLat = 35.6684025; // 対象の緯度
-    const targetLon = 139.7919404; // 対象の経度
-    const radius = 100; // 表示される範囲の半径（メートル）
-    const cylinderHeight = 200; // 円筒の高さ
-    const cylinderRadius = 20; // 円筒の半径
+    const R = 6371e3; // Earth radius in meters
 
-    function init() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
-
-      // ビデオストリームをテクスチャとして背景に設定
-      const video = document.getElementById('video');
-      const videoTexture = new THREE.VideoTexture(video);
-      scene.background = videoTexture;
-
-      // 半透明の赤い円筒を作成
-      const geometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
-      const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
-      cylinder = new THREE.Mesh(geometry, material);
-      scene.add(cylinder);
-
-      // カメラのデフォルト位置
-      camera.position.z = 100;
-
-      // デバイスの方向イベントリスナーを追加
-      requestDeviceOrientationPermission();
-
-      // ユーザー位置の取得を開始
-      startVideoStream();
-      requestGeolocationPermission();
-      
-      // レンダリングループ
-      animate();
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    }
-
-    function startVideoStream() {
-      const constraints = { video: { facingMode: 'environment' } };
-      navigator.mediaDevices.getUserMedia(constraints)
-        .then((stream) => {
-          const video = document.getElementById('video');
-          video.srcObject = stream;
-          video.play();
-        })
-        .catch((error) => {
-          console.error('カメラの起動に失敗しました:', error);
-        });
-    }
-
-    // 距離計算（Haversineの公式）
+    // Haversine formula to calculate distance
     function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3; // 地球の半径（メートル）
-      const φ1 = lat1 * Math.PI / 180;
-      const φ2 = lat2 * Math.PI / 180;
-      const Δφ = (lat2 - lat1) * Math.PI / 180;
-      const Δλ = (lon2 - lon1) * Math.PI / 180;
+      const φ1 = (lat1 * Math.PI) / 180;
+      const φ2 = (lat2 * Math.PI) / 180;
+      const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+      const Δλ = ((lon2 - lon1) * Math.PI) / 180;
 
       const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
                 Math.cos(φ1) * Math.cos(φ2) *
                 Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
       return R * c;
     }
 
-    // 緯度経度を3D座標に変換する関数（相対位置）
-    function latLonToRelativePosition(userLat, userLon, targetLat, targetLon) {
-      const scale = 0.00001; // スケール調整
-      const dX = (targetLon - userLon) * scale * 6371e3 * Math.cos(userLat * Math.PI / 180);
-      const dZ = (targetLat - userLat) * scale * 6371e3;
-      return new THREE.Vector3(dX, 0, dZ); // 円筒の中心を地面に合わせる
+    // Azimuth calculation
+    function calculateDirection(lat1, lon1, lat2, lon2) {
+      const φ1 = (lat1 * Math.PI) / 180;
+      const φ2 = (lat2 * Math.PI) / 180;
+      const λ1 = (lon1 * Math.PI) / 180;
+      const λ2 = (lon2 * Math.PI) / 180;
+
+      const y = Math.sin(λ2 - λ1) * Math.cos(φ2);
+      const x = Math.cos(φ1) * Math.sin(φ2) -
+                Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2 - λ1);
+      const θ = Math.atan2(y, x);
+      return ((θ * 180) / Math.PI + 360) % 360; // Normalize to 0-360
     }
 
-    // 位置情報とオブジェクト位置を確認
-    function checkPosition(position) {
-      const userLat = position.coords.latitude;
-      const userLon = position.coords.longitude;
-      const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
-
-      document.getElementById('latlon').textContent = `${userLat.toFixed(6)}, ${userLon.toFixed(6)}`;
-      document.getElementById('distance').textContent = distance.toFixed(2);
-      document.getElementById('objectLatLon').textContent = `${targetLat.toFixed(6)}, ${targetLon.toFixed(6)}`;
-      document.getElementById('inRange').textContent = distance <= radius ? 'はい' : 'いいえ';
-
-      if (distance <= radius) {
-        cylinder.visible = true;
-        const targetPosition = latLonToRelativePosition(userLat, userLon, targetLat, targetLon);
-        cylinder.position.copy(targetPosition);
-      } else {
-        cylinder.visible = false;
-      }
+    // Load JSON data
+    async function loadData() {
+      const suirotuuhou = await fetch('suirotuuhou.json').then(res => res.json());
+      const polygons = await fetch('polygons.json').then(res => res.json());
+      return { suirotuuhou, polygons };
     }
 
-    // デバイスの方向センサーへのアクセスを要求する関数
-    function requestDeviceOrientationPermission() {
-      const permissionButton = document.getElementById('permissionButton');
+    // Main function
+    async function main() {
+      const { suirotuuhou, polygons } = await loadData();
+      const infoDiv = document.getElementById("info");
 
-      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        // iOS 13以降でのアクセス許可リクエスト
-        permissionButton.style.display = 'block';
-        permissionButton.addEventListener('click', () => {
-          DeviceOrientationEvent.requestPermission()
-            .then((response) => {
-              if (response === 'granted') {
-                window.addEventListener('deviceorientation', handleOrientation);
-                permissionButton.style.display = 'none';
-              } else {
-                alert('方向センサーへのアクセスが許可されませんでした。');
-              }
-            })
-            .catch(console.error);
+      // Access camera
+      const video = document.getElementById("camera");
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => video.srcObject = stream)
+        .catch(err => console.error("Camera access denied:", err));
+
+      // Track user location
+      navigator.geolocation.watchPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        const nearbyInfo = [];
+
+        // Check proximity to points
+        suirotuuhou.features.forEach(feature => {
+          const { x, y } = feature.geometry;
+          const name = feature.attributes.name;
+          const distance = calculateDistance(latitude, longitude, y, x);
+          if (distance <= 100) {
+            const direction = calculateDirection(latitude, longitude, y, x);
+            nearbyInfo.push(`${name},${Math.round(distance)}m,${Math.round(direction)}°`);
+          }
         });
-      } else {
-        // 他のブラウザでは直接アクセス
-        window.addEventListener('deviceorientation', handleOrientation);
-      }
+
+        // Check proximity to polygons
+        polygons.forEach(polygon => {
+          const closestPoint = polygon.coordinates.reduce((closest, [lat, lon]) => {
+            const distance = calculateDistance(latitude, longitude, lat, lon);
+            return !closest || distance < closest.distance
+              ? { distance, lat, lon }
+              : closest;
+          }, null);
+
+          if (closestPoint && closestPoint.distance <= 100) {
+            const direction = calculateDirection(latitude, longitude, closestPoint.lat, closestPoint.lon);
+            nearbyInfo.push(`${polygon.popup},${Math.round(closestPoint.distance)}m,${Math.round(direction)}°`);
+          }
+        });
+
+        // Update UI
+        infoDiv.innerHTML = nearbyInfo.length
+          ? nearbyInfo.join('<br>')
+          : "No alerts nearby.";
+      }, (err) => {
+        console.error("Geolocation error:", err);
+        infoDiv.textContent = "Unable to retrieve location.";
+      });
     }
 
-    // 位置情報の許可を要求
-    function requestGeolocationPermission() {
-      if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(checkPosition, handleGeolocationError, { enableHighAccuracy: true });
-      } else {
-        alert('お使いのブラウザは位置情報取得をサポートしていません。');
-      }
-    }
-
-    // 位置情報取得エラー処理
-    function handleGeolocationError(error) {
-      console.error('位置情報の取得に失敗しました:', error.message);
-      alert('位置情報の取得を許可してください。');
-
-      // 再試行のために位置情報を再度要求
-      setTimeout(requestGeolocationPermission, 3000);
-    }
-
-    // デバイスの向き情報でカメラを回転し、円筒が垂直に固定されるよう調整
-    function handleOrientation(event) {
-      const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
-      const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
-      const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
-
-      camera.rotation.set(beta, alpha, -gamma, 'YXZ');
-      cylinder.rotation.set(Math.PI / 2, 0, 0); // 地面に対して垂直
-    }
-
-    init();
+    main();
   </script>
 </body>
 </html>
