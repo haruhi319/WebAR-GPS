@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ARマップ</title>
+    <title>自分の位置をARで表示</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
 </head>
@@ -10,51 +10,42 @@
     <a-scene embedded arjs>
         <!-- カメラ -->
         <a-camera gps-camera rotation-reader></a-camera>
+
+        <!-- 自分の位置を示すピン -->
+        <a-entity id="user-pin" 
+                  gps-entity-place 
+                  geometry="primitive: cone; height: 1; radiusBottom: 0.5; radiusTop: 0;" 
+                  material="color: blue;" 
+                  visible="false"></a-entity>
     </a-scene>
 
     <script>
-        // JSONデータを取得してピンを作成
-        fetch('suirotuuhou.json')
-            .then(response => response.json())
-            .then(data => {
-                data.features.forEach(feature => {
-                    const { geometry, attributes } = feature;
-                    const latitude = geometry.y;
-                    const longitude = geometry.x;
-                    const nameParts = attributes.name.split(/[\s　、,、\-]+/);
-                    const lastWord = nameParts[nameParts.length - 1];
+        // GPSデータを取得して自分の位置にピンを表示
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
 
-                    // ピンを作成
-                    const scene = document.querySelector('a-scene');
-                    const pin = document.createElement('a-entity');
+                    console.log("現在位置を取得しました:", userLat, userLng);
 
-                    // ピンの見た目を設定
-                    pin.setAttribute('geometry', {
-                        primitive: 'cone',
-                        height: 1,
-                        radiusBottom: 0.5,
-                        radiusTop: 0
+                    // ピンの位置を設定
+                    const userPin = document.querySelector("#user-pin");
+                    userPin.setAttribute("gps-entity-place", {
+                        latitude: userLat,
+                        longitude: userLng,
                     });
-                    pin.setAttribute('material', {
-                        color: 'red'
-                    });
-
-                    // GPSデータを設定
-                    pin.setAttribute('gps-entity-place', {
-                        latitude: latitude,
-                        longitude: longitude
-                    });
-
-                    // タップ/クリックでポップアップを表示
-                    pin.addEventListener('click', () => {
-                        alert(`位置情報: ${latitude}, ${longitude}\n情報: ${info}`);
-                    });
-
-                    // シーンに追加
-                    scene.appendChild(pin);
-                });
-            })
-            .catch(error => console.error("JSONデータの取得に失敗しました:", error));
+                    userPin.setAttribute("visible", "true");
+                },
+                function (error) {
+                    console.error("位置情報の取得に失敗しました:", error);
+                    alert("位置情報を取得できませんでした。設定を確認してください。");
+                },
+                { enableHighAccuracy: true } // 高精度の位置情報を取得
+            );
+        } else {
+            alert("このブラウザでは位置情報の取得がサポートされていません。");
+        }
     </script>
 </body>
 </html>
