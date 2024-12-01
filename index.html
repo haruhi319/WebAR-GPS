@@ -18,33 +18,41 @@
 
     <script>
         // JSONファイルからピンを追加
-        fetch("suirotuuhou.json")
+        fetch('suirotuuhou.json')
             .then(response => response.json())
             .then(data => {
                 data.features.forEach(feature => {
-                    const lat = feature.geometry.y;
-                    const lng = feature.geometry.x;
+                    const { attributes, geometry } = feature;
+
+                    // 緯度と経度を取得
+                    const lat = geometry.y;
+                    const lng = geometry.x;
                     const nameParts = attributes.name.split(/[\s　、,、\-]+/);
                     const lastWord = nameParts[nameParts.length - 1];
 
-                    // JSONの緯度経度にピンを配置
+                    // ピンを作成
                     const entity = document.createElement('a-entity');
                     entity.setAttribute('gps-entity-place', `latitude: ${lat}; longitude: ${lng}`);
                     entity.setAttribute('geometry', 'primitive: sphere; radius: 0.5');
-                    entity.setAttribute('material', 'color: blue;');
+                    entity.setAttribute('material', 'color: red; opacity: 0.8;');
                     entity.setAttribute('scale', '1 1 1');
 
-                    // タップ/クリックで情報を表示
+                    // 高度を一時的に調整
+                    entity.setAttribute('position', `0 10 0`); // 高さを10mに設定
+
+                    // ピンをクリック時のポップアップ
                     entity.addEventListener('click', () => {
                         alert(`情報: ${lastWord}`);
                     });
 
-                    document.querySelector("a-scene").appendChild(entity);
+                    // シーンにピンを追加
+                    document.querySelector('a-scene').appendChild(entity);
                 });
             })
             .catch(error => {
-                console.error("JSONデータの読み込みに失敗:", error);
+                console.error('JSONの読み込みに失敗しました:', error);
             });
+
     </script>
 </body>
 </html>
