@@ -33,23 +33,6 @@
                 console.log(`現在位置: 緯度: ${userLatitude}, 経度: ${userLongitude}`);
                 // ここで位置情報を使った処理を実行
               },
-              (error) => {
-                console.error('位置情報の取得に失敗しました:', error);
-                switch (error.code) {
-                  case error.PERMISSION_DENIED:
-                    alert("位置情報の取得が拒否されました。設定で位置情報を許可してください。");
-                    break;
-                  case error.POSITION_UNAVAILABLE:
-                    alert("現在位置が取得できませんでした。再試行してください。");
-                    break;
-                  case error.TIMEOUT:
-                    alert("位置情報の取得に時間がかかりすぎました。再試行してください。");
-                    break;
-                  default:
-                    alert("位置情報取得に未知のエラーが発生しました。");
-                    break;
-                }
-              },
               {
                 enableHighAccuracy: true, // 高精度な位置情報を取得
                 maximumAge: 0, // キャッシュを使用しない
@@ -61,8 +44,25 @@
             alert('このブラウザでは位置情報APIが利用できません。');
           }
         }
-    
         getCurrentPosition();
+        function getUserMedia() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then((stream) => {
+                        console.log('カメラアクセス成功');
+                        // カメラストリームを表示
+                        let videoElement = document.createElement('video');
+                        videoElement.srcObject = stream;
+                        videoElement.play();
+                        document.body.appendChild(videoElement);
+                    })
+                    .catch((error) => {
+                        console.error('カメラアクセス失敗:', error);
+                    });
+            } else {
+                console.error('カメラがサポートされていません');
+            }
+        getUserMedia();
       </script>
 </body>
 </html>
