@@ -2,9 +2,10 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ARでピンを表示</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>location-based AR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@1.7.2/aframe/build/aframe-ar.js"></script>
     <style>
         #arjsDebugUIContainer {
             display: none !important; /* デバッグUIを非表示にする */
@@ -12,93 +13,19 @@
     </style>
 </head>
 <body style="margin: 0; overflow: hidden;">
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+    <a-scene 
+        vr-mode-ui="enabled: false"
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false;"
+    >
+        <a-cylinder
+        position="0 5 0"  <!-- ピンの高さ -->
+        radius="0.1"        <!-- ピンの幅 -->
+        height="1.5"        <!-- ピンの高さ -->
+        color="red"         <!-- ピンの色 -->
+        gps-entity-place="latitude: 35.6173043; longitude: 139.6617423;"
+      ></a-cylinder>
         <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
-
-    <script>
-        // 現在位置を取得
-        function getCurrentPosition() {
-            // カメラがロードされた後に位置情報を取得する
-            document.querySelector('a-camera').addEventListener('loaded', function() {
-                if ("geolocation" in navigator) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            const userLatitude = position.coords.latitude;
-                            const userLongitude = position.coords.longitude;
-                            console.log(`現在位置: 緯度: ${userLatitude}, 経度: ${userLongitude}`);
-                            // ここで取得した位置を他の処理に活用
-                        },
-                        (error) => {
-                            console.error('位置情報の取得に失敗しました:', error);
-                            switch (error.code) {
-                                case error.PERMISSION_DENIED:
-                                    alert("位置情報の取得が拒否されました。設定で位置情報を許可してください。");
-                                    break;
-                                case error.POSITION_UNAVAILABLE:
-                                    alert("現在位置が取得できませんでした。再試行してください。");
-                                    break;
-                                case error.TIMEOUT:
-                                    alert("位置情報の取得に時間がかかりすぎました。再試行してください。");
-                                    break;
-                                default:
-                                    alert("位置情報取得に未知のエラーが発生しました。");
-                                    break;
-                            }
-                        },
-                        {
-                            enableHighAccuracy: true, // 高精度な位置情報を取得
-                            maximumAge: 0, // キャッシュを使用しない
-                            timeout: 10000 // 10秒以内に応答がない場合エラー
-                        }
-                    );
-                } else {
-                    console.error('このブラウザでは位置情報APIが利用できません。');
-                    alert('このブラウザでは位置情報APIが利用できません。');
-                }
-            });
-        }
-        // JSONファイルからピンを追加
-        fetch('suirotuuhou.json')
-            .then(response => response.json())
-            .then(data => {
-                data.features.forEach(feature => {
-                    const { attributes, geometry } = feature;
-
-                    // 緯度と経度を取得
-                    const lat = geometry.y;
-                    const lng = geometry.x;
-                    const nameParts = attributes.name.split(/[\s　、,、\-]+/);
-                    const lastWord = nameParts[nameParts.length - 1];
-
-                    // ピンを作成
-                    const entity = document.createElement('a-entity');
-                    entity.setAttribute('gps-entity-place', `latitude: ${lat}; longitude: ${lng}`);
-                    entity.setAttribute('geometry', 'primitive: sphere; radius: 0.5');
-                    entity.setAttribute('material', 'color: red; opacity: 0.8;');
-                    entity.setAttribute('scale', '1 1 1');
-                    console.log(`緯度; ${lat}, 経度: ${lng}`);
-
-                    // 高度を一時的に調整
-                    entity.setAttribute('position', `0 10 0`); // 高さを10mに設定
-
-                    // ピンをクリック時のポップアップ
-                    entity.addEventListener('click', () => {
-                        alert(`情報: ${lastWord}`);
-                    });
-
-                    // シーンにピンを追加
-                    document.querySelector('a-scene').appendChild(entity);
-                });
-            })
-            .catch(error => {
-                console.error('JSONの読み込みに失敗しました:', error);
-            });
-
-        // ページ読み込み時に現在位置を取得
-        window.onload = () => {
-            getCurrentPosition();
-        };
-    </script>
 </body>
 </html>
