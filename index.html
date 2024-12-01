@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>location-based AR</title>
+    <title>Location-based AR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@1.7.2/aframe/build/aframe-ar.js"></script>
 </head>
@@ -14,16 +14,17 @@
         arjs="sourceType: webcam; debugUIEnabled: true; location-awareness: true;"
     >
         <a-cylinder
-        position="0 5 0"  <!-- ピンの高さ -->
-        radius="0.1"        <!-- ピンの幅 -->
-        height="1.5"        <!-- ピンの高さ -->
-        color="red"         <!-- ピンの色 -->
-        gps-entity-place="latitude: 35.6173043; longitude: 139.6617423;"
-      ></a-cylinder>
+            position="0 5 0"  <!-- ピンの高さ -->
+            radius="0.1"        <!-- ピンの幅 -->
+            height="1.5"        <!-- ピンの高さ -->
+            color="red"         <!-- ピンの色 -->
+            gps-entity-place="latitude: 35.6173043; longitude: 139.6617423;"
+        ></a-cylinder>
         <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
 
     <script>
+        // 位置情報取得の関数
         function getCurrentPosition() {
           if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
@@ -31,9 +32,11 @@
                 const userLatitude = position.coords.latitude;
                 const userLongitude = position.coords.longitude;
                 console.log(`現在位置: 緯度: ${userLatitude}, 経度: ${userLongitude}`);
-                // ここで位置情報を使った処理を実行
+                // 位置情報を反映した処理を書く場所
+                // 例: ARエンティティに動的に位置情報を設定する
+                document.querySelector('a-cylinder').setAttribute('gps-entity-place', `latitude: ${userLatitude}; longitude: ${userLongitude}`);
               },
-            (error) => {
+              (error) => {
                     console.error('位置情報の取得に失敗しました:', error);
                     switch (error.code) {
                         case error.PERMISSION_DENIED:
@@ -61,7 +64,11 @@
             alert('このブラウザでは位置情報APIが利用できません。');
           }
         }
+
+        // 位置情報を取得する
         getCurrentPosition();
+
+        // カメラを使用する関数
         function getUserMedia() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia({ video: true })
@@ -80,7 +87,9 @@
                 console.error('カメラがサポートされていません');
             }
         }
+
+        // カメラを起動
         getUserMedia();
-      </script>
+    </script>
 </body>
 </html>
