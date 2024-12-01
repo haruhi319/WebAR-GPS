@@ -3,93 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Location-based AR</title>
+    <title>location-based AR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@1.7.2/aframe/build/aframe-ar.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
+    <!-- 現在地の緯度経度を表示するためのdiv -->
+    <div id="location" style="position: fixed; top: 10px; left: 10px; font-size: 20px; color: white; z-index: 1000;">
+        緯度: --, 経度: --
+    </div>
+
     <a-scene 
         vr-mode-ui="enabled: false"
         embedded
         arjs="sourceType: webcam; debugUIEnabled: true; location-awareness: true;"
     >
         <a-cylinder
-            position="0 5 0"  <!-- ピンの高さ -->
-            radius="0.1"        <!-- ピンの幅 -->
-            height="1.5"        <!-- ピンの高さ -->
-            color="red"         <!-- ピンの色 -->
+            position="0 5 0"
+            radius="0.1"
+            height="1.5"
+            color="red"
             gps-entity-place="latitude: 35.6173043; longitude: 139.6617423;"
         ></a-cylinder>
         <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
 
     <script>
-        // 位置情報取得の関数
+        // 現在地を取得して表示する
         function getCurrentPosition() {
-          if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                const userLatitude = position.coords.latitude;
-                const userLongitude = position.coords.longitude;
-                console.log(`現在位置: 緯度: ${userLatitude}, 経度: ${userLongitude}`);
-                // 位置情報を反映した処理を書く場所
-                // 例: ARエンティティに動的に位置情報を設定する
-                document.querySelector('a-cylinder').setAttribute('gps-entity-place', `latitude: ${userLatitude}; longitude: ${userLongitude}`);
-              },
-              (error) => {
-                    console.error('位置情報の取得に失敗しました:', error);
-                    switch (error.code) {
-                        case error.PERMISSION_DENIED:
-                            alert("位置情報の取得が拒否されました。設定で位置情報を許可してください。");
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            alert("現在位置が取得できませんでした。再試行してください。");
-                            break;
-                        case error.TIMEOUT:
-                            alert("位置情報の取得に時間がかかりすぎました。再試行してください。");
-                            break;
-                        default:
-                            alert("位置情報取得に未知のエラーが発生しました。");
-                            break;
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLatitude = position.coords.latitude;
+                        const userLongitude = position.coords.longitude;
+                        console.log(`現在位置: 緯度: ${userLatitude}, 経度: ${userLongitude}`);
+
+                        // 現在地を画面に表示
+                        document.getElementById('location').textContent = `緯度: ${userLatitude}, 経度: ${userLongitude}`;
+                    },
+                    (error) => {
+                        console.error('位置情報の取得に失敗しました:', error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        maximumAge: 0,
+                        timeout: 10000
                     }
-                },
-              {
-                enableHighAccuracy: true, // 高精度な位置情報を取得
-                maximumAge: 0, // キャッシュを使用しない
-                timeout: 10000 // 10秒以内に応答がない場合エラー
-              }
-            );
-          } else {
-            console.error('このブラウザでは位置情報APIが利用できません。');
-            alert('このブラウザでは位置情報APIが利用できません。');
-          }
+                );
+            } else {
+                console.error('このブラウザでは位置情報APIが利用できません。');
+                alert('このブラウザでは位置情報APIが利用できません。');
+            }
         }
 
-        // 位置情報を取得する
         getCurrentPosition();
-
-        // カメラを使用する関数
         function getUserMedia() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then((stream) => {
-                        console.log('カメラアクセス成功');
-                        // カメラストリームを表示
-                        let videoElement = document.createElement('video');
-                        videoElement.srcObject = stream;
-                        videoElement.play();
-                        document.body.appendChild(videoElement);
-                    })
-                    .catch((error) => {
-                        console.error('カメラアクセス失敗:', error);
-                    });
+                navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" }  // 外向きカメラを強制的に使用
+                })
+                .then((stream) => {
+                    console.log('カメラアクセス成功');
+                    // カメラストリームを表示
+                    let videoElement = document.createElement('video');
+                    videoElement.srcObject = stream;
+                    videoElement.play();
+                    document.body.appendChild(videoElement);
+                })
+                .catch((error) => {
+                    console.error('カメラアクセス失敗:', error);
+                });
             } else {
                 console.error('カメラがサポートされていません');
             }
         }
-
-        // カメラを起動
-        getUserMedia();
     </script>
 </body>
 </html>
