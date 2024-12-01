@@ -5,9 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>location-based AR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://unpkg.com/aframe-look-at-component@0.9.0/dist/aframe-look-at-component.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@1.7.2/aframe/build/aframe-ar.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@1.7.2/aframe/build/aframe-ar.min.js"></script>
 
     <style>
       body {
@@ -18,112 +16,55 @@
   </head>
 
   <body>
-    <div id="loading" style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: white;">
-      <p>Loading... Please allow camera and location access.</p>
-    </div>
-
     <a-scene
-      id="ar-scene"
-      style="display: none;"
-      device-orientation-permission-ui="enabled: true"
-      vr-mode-ui="enabled: false"
-      arjs="sourceType: webcam; debugUIEnabled: false;"
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true;"
     >
       <a-camera
-        id="camera"
-        gps-camera="minDistance:20; maxDistance:500;"
+        gps-camera="minDistance: 1; maxDistance: 1000;"
         raycaster="objects: .clickable"
         cursor="rayOrigin: mouse"
       ></a-camera>
     </a-scene>
 
     <script>
-      async function init() {
-        // カメラ権限要求
-        try {
-          await navigator.mediaDevices.getUserMedia({ video: true });
-          console.log("カメラの権限が許可されました。");
-        } catch (error) {
-          console.error("カメラの権限が拒否されました:", error);
-          alert("カメラ権限が必要です。再度試してください。");
-          return;
-        }
+      // JSONデータを読み込み
+      fetch("suirotuuhou.json")
+        .then((response) => {
+          if (!response.ok) throw new Error("ネットワークエラー: " + response.status);
+          return response.json();
+        })
+        .then((data) => {
+          data.features.forEach((feature) => {
+            const { geometry, attributes } = feature;
+            const lat = geometry.y;
+            const lng = geometry.x;
+            const nameParts = attributes.name.split(/[\s　、,、\-]+/);
+            const lastWord = nameParts[nameParts.length - 1];
 
-        // 位置情報権限要求
-        if ("geolocation" in navigator) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              console.log("位置情報の取得に成功:", position.coords);
-              document.getElementById("loading").style.display = "none";
-              document.getElementById("ar-scene").style.display = "block";
+            createPin(lat, lng, lastWord);
+          });
+        })
+        .catch((error) => console.error("JSON読み込みエラー:", error));
 
-              // JSONデータを取得してARオブジェクトを表示
-              loadPins();
-            },
-            (error) => {
-              console.error("位置情報の取得に失敗しました:", error);
-              alert("位置情報権限が必要です。再度試してください。");
-            }
-          );
-        } else {
-          alert("このデバイスでは位置情報が利用できません。");
-        }
-      }
-
-      function loadPins() {
-        fetch("suirotuuhou.json")
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("ネットワークエラー: " + response.status);
-            }
-            return response.json();
-          })
-          .then((data) => {
-            data.features.forEach((feature) => {
-              const { geometry, attributes } = feature;
-              const lat = geometry.y;
-              const lng = geometry.x;
-              const nameParts = attributes.name.split(/[\s　、,、\-]+/);
-              const lastWord = nameParts[nameParts.length - 1];
-
-              // ARエレメントを作成
-              createPin(lat, lng, lastWord);
-            });
-          })
-          .catch((error) =>
-            console.error("JSONデータの読み込みに失敗しました:", error)
-          );
-      }
-
+      // ピンを作成
       function createPin(lat, lng, lastWord) {
-        const scene = document.querySelector("#ar-scene");
+        const scene = document.querySelector("a-scene");
 
-        // ピンを作成
         const pin = document.createElement("a-entity");
-        pin.setAttribute(
-          "gps-entity-place",
-          `latitude: ${lat}; longitude: ${lng};`
-        );
-        pin.setAttribute("geometry", "primitive: sphere; radius: 0.5;");
-        pin.setAttribute("material", "color: red; opacity: 0.7");
-        pin.setAttribute("scale", "0.5 0.5 0.5");
+        pin.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng};`);
+        pin.setAttribute("geometry", "primitive: sphere; radius: 1;");
+        pin.setAttribute("material", "color: red; opacity: 0.7;");
+        pin.setAttribute("scale", "2 2 2");
         scene.appendChild(pin);
 
-        // 名前（lastWord）を表示
         const text = document.createElement("a-entity");
-        text.setAttribute(
-          "gps-entity-place",
-          `latitude: ${lat}; longitude: ${lng};`
-        );
-        text.setAttribute(
-          "text",
-          `value: ${lastWord}; color: black; align: center; width: 4;`
-        );
+        text.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng};`);
+        text.setAttribute("text", `value: ${lastWord}; color: black; align: center; width: 5;`);
+        text.setAttribute("look-at", "[gps-camera]");
+        text.setAttribute("scale", "2 2 2");
         scene.appendChild(text);
       }
-
-      // 初期化
-      init();
     </script>
   </body>
 </html>
