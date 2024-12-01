@@ -13,7 +13,6 @@
 </head>
 <body style="margin: 0; overflow: hidden;">
     <a-scene embedded arjs="debugUIEnabled: false;">
-        <!-- カメラ -->
         <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
 
@@ -29,14 +28,14 @@
                     const lastWord = nameParts[nameParts.length - 1];
 
                     // JSONの緯度経度にピンを配置
-                    const entity = document.createElement("a-entity");
-                    entity.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng}`);
-                    entity.setAttribute("geometry", "primitive: sphere; radius: 0.5");
-                    entity.setAttribute("material", "color: red;");
-                    entity.setAttribute("scale", "1 1 1");
+                    const entity = document.createElement('a-entity');
+                    entity.setAttribute('gps-entity-place', `latitude: ${lat}; longitude: ${lng}`);
+                    entity.setAttribute('geometry', 'primitive: sphere; radius: 0.5');
+                    entity.setAttribute('material', 'color: blue;');
+                    entity.setAttribute('scale', '1 1 1');
 
                     // タップ/クリックで情報を表示
-                    entity.addEventListener("click", () => {
+                    entity.addEventListener('click', () => {
                         alert(`情報: ${lastWord}`);
                     });
 
