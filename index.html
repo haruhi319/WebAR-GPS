@@ -3,10 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>location-based AR</title>
+    <title>Location-based AR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@1.7.2/aframe/build/aframe-ar.min.js"></script>
-
     <style>
       body {
         margin: 0;
@@ -28,39 +27,88 @@
     </a-scene>
 
     <script>
-      // JSONデータを読み込み
+      // 地球の半径（メートル）
+      const EARTH_RADIUS = 6371e3;
+
+      // 距離と方位角を計算する関数
+      function calculateDistanceAndBearing(lat1, lon1, lat2, lon2) {
+        const toRad = (deg) => (deg * Math.PI) / 180;
+
+        const φ1 = toRad(lat1);
+        const φ2 = toRad(lat2);
+        const Δφ = toRad(lat2 - lat1);
+        const Δλ = toRad(lon2 - lon1);
+
+        // Haversine formula
+        const a =
+          Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+          Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = EARTH_RADIUS * c;
+
+        // 方位角を計算
+        const y = Math.sin(Δλ) * Math.cos(φ2);
+        const x =
+          Math.cos(φ1) * Math.sin(φ2) -
+          Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+        const bearing = (Math.atan2(y, x) * 180) / Math.PI;
+
+        return { distance, bearing: (bearing + 360) % 360 };
+      }
+
+      // JSONデータを読み込む
       fetch("suirotuuhou.json")
         .then((response) => {
           if (!response.ok) throw new Error("ネットワークエラー: " + response.status);
           return response.json();
         })
         .then((data) => {
-          data.features.forEach((feature) => {
-            const { geometry, attributes } = feature;
-            const lat = geometry.y;
-            const lng = geometry.x;
-            const nameParts = attributes.name.split(/[\s　、,、\-]+/);
-            const lastWord = nameParts[nameParts.length - 1];
+          navigator.geolocation.getCurrentPosition((position) => {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
 
-            createPin(lat, lng, lastWord);
+            data.features.forEach((feature) => {
+              const { geometry, attributes } = feature;
+              const pinLat = geometry.y;
+              const pinLon = geometry.x;
+
+              const { distance } = calculateDistanceAndBearing(
+                userLat,
+                userLon,
+                pinLat,
+                pinLon
+              );
+
+              // 距離が500m以内のものだけ表示
+              if (distance <= 1000) {
+                const nameParts = attributes.name.split(/[\s　、,、\-]+/);
+                const lastWord = nameParts[nameParts.length - 1];
+                createPin(pinLat, pinLon, lastWord, distance);
+              }
+            });
           });
         })
         .catch((error) => console.error("JSON読み込みエラー:", error));
 
       // ピンを作成
-      function createPin(lat, lng, lastWord) {
+      function createPin(lat, lon, lastWord, distance) {
         const scene = document.querySelector("a-scene");
 
+        // 赤い球体（ピン）
         const pin = document.createElement("a-entity");
-        pin.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng};`);
+        pin.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lon};`);
         pin.setAttribute("geometry", "primitive: sphere; radius: 1;");
         pin.setAttribute("material", "color: red; opacity: 0.7;");
         pin.setAttribute("scale", "2 2 2");
         scene.appendChild(pin);
 
+        // ピンの上にテキスト
         const text = document.createElement("a-entity");
-        text.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng};`);
-        text.setAttribute("text", `value: ${lastWord}; color: black; align: center; width: 5;`);
+        text.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lon};`);
+        text.setAttribute(
+          "text",
+          `value: ${lastWord} (${Math.round(distance)}m); color: black; align: center; width: 5;`
+        );
         text.setAttribute("look-at", "[gps-camera]");
         text.setAttribute("scale", "2 2 2");
         scene.appendChild(text);
