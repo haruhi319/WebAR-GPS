@@ -15,45 +15,13 @@
     <a-scene embedded arjs="debugUIEnabled: false;">
         <!-- カメラ -->
         <a-camera gps-camera rotation-reader></a-camera>
-
-        <!-- テスト用のピン -->
-        <a-entity id="user-pin" 
-                  gps-entity-place="latitude: 0; longitude: 0" 
-                  geometry="primitive: cone; height: 1; radiusBottom: 0.5; radiusTop: 0;" 
-                  material="color: blue;" 
-                  visible="false"></a-entity>
     </a-scene>
 
     <script>
-        // 自分の位置を取得してピンを表示
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function (position) {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-
-                    console.log("現在位置:", userLat, userLng);
-
-                    // ピンの位置を設定
-                    const userPin = document.querySelector("#user-pin");
-                    userPin.setAttribute("gps-entity-place", `latitude: ${userLat}; longitude: ${userLng}`);
-                    userPin.setAttribute("visible", "true");
-                },
-                function (error) {
-                    console.error("位置情報の取得に失敗:", error);
-                    alert("位置情報を取得できませんでした。設定を確認してください。");
-                },
-                { enableHighAccuracy: true }
-            );
-        } else {
-            alert("このブラウザでは位置情報の取得がサポートされていません。");
-        }
-
         // JSONファイルからピンを追加
         fetch("suirotuuhou.json")
             .then(response => response.json())
             .then(data => {
-                console.log("JSONデータ:", data);
                 data.features.forEach(feature => {
                     const lat = feature.geometry.y;
                     const lng = feature.geometry.x;
