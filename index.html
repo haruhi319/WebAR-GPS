@@ -17,6 +17,30 @@
     </a-scene>
 
     <script>
+        // 現在位置を取得
+        function getCurrentPosition() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLatitude = position.coords.latitude;
+                        const userLongitude = position.coords.longitude;
+                        console.log(`現在位置: 緯度: ${userLatitude}, 経度: ${userLongitude}`);
+                        // ここで取得した位置を他の処理に活用
+                    },
+                    (error) => {
+                        console.error('位置情報の取得に失敗しました:', error);
+                    },
+                    {
+                        enableHighAccuracy: true, // 高精度な位置情報を取得
+                        maximumAge: 0, // キャッシュを使用しない
+                        timeout: 10000 // 10秒以内に応答がない場合エラー
+                    }
+                );
+            } else {
+                console.error('このブラウザでは位置情報APIが利用できません。');
+            }
+        }
+
         // JSONファイルからピンを追加
         fetch('suirotuuhou.json')
             .then(response => response.json())
@@ -53,6 +77,10 @@
                 console.error('JSONの読み込みに失敗しました:', error);
             });
 
+        // ページ読み込み時に現在位置を取得
+        window.onload = () => {
+            getCurrentPosition();
+        };
     </script>
 </body>
 </html>
