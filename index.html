@@ -1,4 +1,4 @@
-{% load static %}
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -7,43 +7,17 @@
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-look-at-component@0.9.0/dist/aframe-look-at-component.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@1.7.2/aframe/build/aframe-ar.js"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script type="module">
-      import LatLon from 'geodesy/latlon-ellipsoidal-vincenty.js';
-    </script>
-
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    
     <style>
-      .top-banner {
-        background: rgba(238, 196, 10, 0.615);
-        top: 0%;
-        left: 0%;
-        padding: 10px 0;
-        z-index: 9999;
-        text-align: center;
-        color: black;
-      }
-      .menu-title {
-        width: 300px;
-        height: 20px;
-        position: absolute;
-        top: 20%;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: rgba(0,0,0,0);
-        z-index: 9999;
-        font-size: 1.8em;
-        font-family: serif;
-        color: rgb(128, 128, 128);
-      }
-      .visibility-hidden {
-        visibility: hidden;
+      body {
+        margin: 0;
+        overflow: hidden;
       }
     </style>
   </head>
 
   <body>
-    <p id="camera_top_banner" class="top-banner"><a>お店を探すアプリ We Bar</a></p>
-
     <a-scene
       device-orientation-permission-ui="enabled: true"
       vr-mode-ui="enabled: false"
@@ -51,49 +25,26 @@
     >
       <a-camera
         id="camera"
-        gps-camera="minDistance:20; maxDistance:500; gpsMinDistance:50;"
+        gps-camera="minDistance:20; maxDistance:500;"
         raycaster="objects: .clickable"
         cursor="rayOrigin: mouse"
-      >
-        <p id="menu_title" class="visibility-hidden">
-          <a target="_blank" rel="noopener noreferrer">おしながき</a>
-        </p>
-        <p id="menu_shop0" class="visibility-hidden">
-          <a target="_blank" rel="noopener noreferrer"></a>
-        </p>
-        <p id="menu_shop1" class="visibility-hidden">
-          <a target="_blank" rel="noopener noreferrer"></a>
-        </p>
-        <p id="menu_shop2" class="visibility-hidden">
-          <a target="_blank" rel="noopener noreferrer">アプリを起動中です</a>
-        </p>
-        <p id="menu_shop3" class="visibility-hidden">
-          <a target="_blank" rel="noopener noreferrer"></a>
-        </p>
-        <p id="menu_shop4" class="visibility-hidden">
-          <a target="_blank" rel="noopener noreferrer"></a>
-        </p>
-        <a-entity id="modalOpen" visible="true"></a-entity>
-
-        <!-- ピンのエレメントとテキストを配置するために、後で使用します -->
-      </a-camera>
-
-      <a-assets>
-        <img id="my-image" src="{% static 'menu_backimg.png' %}">
-      </a-assets>
+      ></a-camera>
     </a-scene>
 
     <script>
       // JSONから緯度経度と単語を抽出し、ARでピンとテキストを表示
       fetch('suirotuuhou.json')
-        .then(response => response.json())
-        .then(data => {
-          data.features.forEach(feature => {
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("ネットワークエラー: " + response.status);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          data.features.forEach((feature) => {
             const { geometry, attributes } = feature;
             const lat = geometry.y;
             const lng = geometry.x;
-
-            // 名前を分割して最後の単語を取得
             const nameParts = attributes.name.split(/[\s　、,、\-]+/);
             const lastWord = nameParts[nameParts.length - 1];
 
@@ -109,7 +60,9 @@
 
         // ピンを作成
         const pin = document.createElement('a-entity');
-        pin.setAttribute('gps-entity-place', `latitude: ${lat}; longitude: ${lng};`);
+        pin.setAttribute('gps-entity-place',
+                         `latitude: ${lat}; longitude: ${lng};`
+                        );
         pin.setAttribute('geometry', 'primitive: sphere; radius: 0.5;');
         pin.setAttribute('material', 'color: red; opacity: 0.7');
         pin.setAttribute('scale', '0.5 0.5 0.5');
@@ -119,7 +72,6 @@
         const text = document.createElement('a-entity');
         text.setAttribute('gps-entity-place', `latitude: ${lat}; longitude: ${lng};`);
         text.setAttribute('text', `value: ${lastWord}; color: black; align: center; width: 4;`);
-        text.setAttribute('scale', '5 5 5');
         scene.appendChild(text);
       }
     </script>
