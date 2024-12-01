@@ -17,7 +17,7 @@
   <body>
     <a-scene
       embedded
-      arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true;"
+      arjs="sourceType: webcam; debugUIEnabled: false; videoTexture: true; trackingMethod: best;"
     >
       <a-camera
         gps-camera="minDistance: 1; maxDistance: 1000;"
@@ -79,7 +79,7 @@
                 pinLon
               );
 
-              // 距離が500m以内のものだけ表示
+              // 距離が1000m以内のものだけ表示
               if (distance <= 1000) {
                 const nameParts = attributes.name.split(/[\s　、,、\-]+/);
                 const lastWord = nameParts[nameParts.length - 1];
