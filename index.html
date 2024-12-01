@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>自分の位置をARで表示</title>
+    <title>ARでピンを表示</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
 </head>
@@ -11,41 +11,68 @@
         <!-- カメラ -->
         <a-camera gps-camera rotation-reader></a-camera>
 
-        <!-- 自分の位置を示すピン -->
+        <!-- テスト用のピン -->
         <a-entity id="user-pin" 
-                  gps-entity-place 
+                  gps-entity-place="latitude: 0; longitude: 0" 
                   geometry="primitive: cone; height: 1; radiusBottom: 0.5; radiusTop: 0;" 
                   material="color: blue;" 
                   visible="false"></a-entity>
     </a-scene>
 
     <script>
-        // GPSデータを取得して自分の位置にピンを表示
+        // 自分の位置を取得してピンを表示
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 function (position) {
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
 
-                    console.log("現在位置を取得しました:", userLat, userLng);
+                    console.log("現在位置:", userLat, userLng);
 
                     // ピンの位置を設定
                     const userPin = document.querySelector("#user-pin");
-                    userPin.setAttribute("gps-entity-place", {
-                        latitude: userLat,
-                        longitude: userLng,
-                    });
+                    userPin.setAttribute("gps-entity-place", `latitude: ${userLat}; longitude: ${userLng}`);
                     userPin.setAttribute("visible", "true");
                 },
                 function (error) {
-                    console.error("位置情報の取得に失敗しました:", error);
+                    console.error("位置情報の取得に失敗:", error);
                     alert("位置情報を取得できませんでした。設定を確認してください。");
                 },
-                { enableHighAccuracy: true } // 高精度の位置情報を取得
+                { enableHighAccuracy: true }
             );
         } else {
             alert("このブラウザでは位置情報の取得がサポートされていません。");
         }
+
+        // JSONファイルからピンを追加
+        fetch("suirotuuhou.json")
+            .then(response => response.json())
+            .then(data => {
+                console.log("JSONデータ:", data);
+                data.features.forEach(feature => {
+                    const lat = feature.geometry.y;
+                    const lng = feature.geometry.x;
+                    const nameParts = attributes.name.split(/[\s　、,、\-]+/);
+                    const lastWord = nameParts[nameParts.length - 1];
+
+                    // JSONの緯度経度にピンを配置
+                    const entity = document.createElement("a-entity");
+                    entity.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng}`);
+                    entity.setAttribute("geometry", "primitive: sphere; radius: 0.5");
+                    entity.setAttribute("material", "color: red;");
+                    entity.setAttribute("scale", "1 1 1");
+
+                    // タップ/クリックで情報を表示
+                    entity.addEventListener("click", () => {
+                        alert(`情報: ${lastWord}`);
+                    });
+
+                    document.querySelector("a-scene").appendChild(entity);
+                });
+            })
+            .catch(error => {
+                console.error("JSONデータの読み込みに失敗:", error);
+            });
     </script>
 </body>
 </html>
