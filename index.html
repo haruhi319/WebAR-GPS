@@ -19,28 +19,45 @@
     <script>
         // 現在位置を取得
         function getCurrentPosition() {
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const userLatitude = position.coords.latitude;
-                        const userLongitude = position.coords.longitude;
-                        console.log(`現在位置: 緯度: ${userLatitude}, 経度: ${userLongitude}`);
-                        // ここで取得した位置を他の処理に活用
-                    },
-                    (error) => {
-                        console.error('位置情報の取得に失敗しました:', error);
-                    },
-                    {
-                        enableHighAccuracy: true, // 高精度な位置情報を取得
-                        maximumAge: 0, // キャッシュを使用しない
-                        timeout: 10000 // 10秒以内に応答がない場合エラー
-                    }
-                );
-            } else {
-                console.error('このブラウザでは位置情報APIが利用できません。');
-            }
+            // カメラがロードされた後に位置情報を取得する
+            document.querySelector('a-camera').addEventListener('loaded', function() {
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const userLatitude = position.coords.latitude;
+                            const userLongitude = position.coords.longitude;
+                            console.log(`現在位置: 緯度: ${userLatitude}, 経度: ${userLongitude}`);
+                            // ここで取得した位置を他の処理に活用
+                        },
+                        (error) => {
+                            console.error('位置情報の取得に失敗しました:', error);
+                            switch (error.code) {
+                                case error.PERMISSION_DENIED:
+                                    alert("位置情報の取得が拒否されました。設定で位置情報を許可してください。");
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    alert("現在位置が取得できませんでした。再試行してください。");
+                                    break;
+                                case error.TIMEOUT:
+                                    alert("位置情報の取得に時間がかかりすぎました。再試行してください。");
+                                    break;
+                                default:
+                                    alert("位置情報取得に未知のエラーが発生しました。");
+                                    break;
+                            }
+                        },
+                        {
+                            enableHighAccuracy: true, // 高精度な位置情報を取得
+                            maximumAge: 0, // キャッシュを使用しない
+                            timeout: 10000 // 10秒以内に応答がない場合エラー
+                        }
+                    );
+                } else {
+                    console.error('このブラウザでは位置情報APIが利用できません。');
+                    alert('このブラウザでは位置情報APIが利用できません。');
+                }
+            });
         }
-
         // JSONファイルからピンを追加
         fetch('suirotuuhou.json')
             .then(response => response.json())
