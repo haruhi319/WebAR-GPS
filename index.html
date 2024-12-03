@@ -16,11 +16,11 @@
     ></script>
     <title>Demo Arjs+Aframe</title>
     <style>
-      *{
-        padding:0;
-        margin:0;
-        box-sizing:border-box;
-        overflow:hidden;
+      * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        overflow: hidden;
       }
     </style>
   </head>
@@ -35,41 +35,68 @@
         Start AR
       </button>
 
-      <!-- カメラコンポーネントの修正 -->
+      <!-- カメラコンポーネント -->
       <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 2000;"></a-camera>
-      
-      <!-- 正しいgeometryタイプを設定 -->
-      <a-entity gps-entity-place="latitude: 35.6174073; longitude: 139.6618322;">
-        <a-image
-          src="https://haruhi319.github.io/WebAR-GPS/pin.png"
-          position="0 1 0"
-          look-at="[gps-camera]"
-          rotation="0 45 0"
-          scale="12 10 12">
-        </a-image>
-        <a-text
-          value="テスト中AR"
-          font="noto-sans-cjk-jp-msdf.json"
-          font-image="noto-sans-cjk-jp-msdf.png"
-          negate="false"
-          color="black"
-          scale="4 4 2"
-          position="-2 8 0"
-          look-at="[gps-camera]"
-          rotation="0 45 0">
-        </a-text>
-      </a-entity>
     </a-scene>
 
     <script>
       // ボタンがクリックされたときに位置情報を取得
-      document.getElementById("startBtn").addEventListener("click", function() {
+      document.getElementById("startBtn").addEventListener("click", function () {
         // 位置情報を取得
-        navigator.geolocation.getCurrentPosition(function(position) {
+        navigator.geolocation.getCurrentPosition(function (position) {
           const userLat = position.coords.latitude;
           const userLon = position.coords.longitude;
           console.log(`User's location: ${userLat}, ${userLon}`);
-        }, function(error) {
+          
+          // JSONファイルを取得してエンティティを作成
+          fetch('suirotuuhou.json')
+            .then(response => response.json())
+            .then(data => {
+              const scene = document.querySelector("a-scene");
+
+              data.features.forEach(feature => {
+                const { attributes, geometry } = feature;
+
+                // 緯度と経度を取得
+                const lat = geometry.y;
+                const lng = geometry.x;
+
+                // 名前の最後の単語を取得
+                const nameParts = attributes.name.split(/[\s　、,、\-]+/);
+                const lastWord = nameParts[nameParts.length - 1];
+
+                // A-Frameエンティティを作成
+                const entity = document.createElement("a-entity");
+                entity.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng}`);
+                
+                // 画像
+                const image = document.createElement("a-image");
+                image.setAttribute("src", "https://haruhi319.github.io/WebAR-GPS/pin.png");
+                image.setAttribute("position", "0 1 0");
+                image.setAttribute("look-at", "[gps-camera]");
+                image.setAttribute("scale", "12 10 12");
+
+                // テキスト
+                const text = document.createElement("a-text");
+                text.setAttribute("value", `${lastWord}`);
+                text.setAttribute("font", "noto-sans-cjk-jp-msdf.json");
+                text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
+                text.setAttribute("negate", "false");
+                text.setAttribute("color", "black");
+                text.setAttribute("scale", "4 4 2");
+                text.setAttribute("position", "0 3 0");
+                text.setAttribute("look-at", "[gps-camera]");
+
+                // エンティティに追加
+                entity.appendChild(image);
+                entity.appendChild(text);
+
+                // シーンに追加
+                scene.appendChild(entity);
+              });
+            })
+            .catch(error => console.error('Error fetching JSON:', error));
+        }, function (error) {
           console.error('Geolocation error:', error);
         });
       });
