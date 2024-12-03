@@ -64,43 +64,28 @@
                 image.setAttribute("src", "https://haruhi319.github.io/WebAR-GPS/pin.png");
                 image.setAttribute("position", "0 1 0");
                 image.setAttribute("look-at", "[gps-camera]");
-                image.setAttribute("scale", "20 20 20");
-                image.setAttribute("class", "clickable");
+                image.setAttribute("rotation", "0 30 0");
+                image.setAttribute("scale", "16 16 16");
 
-                const popup = document.createElement("a-entity");
-                popup.setAttribute("id", `popup${index}`);
-                popup.setAttribute("visible", "false");
+                const background = document.createElement("a-plane");
+                background.setAttribute("color", "white");
+                background.setAttribute("width", "6");
+                background.setAttribute("height", "2");
+                background.setAttribute("position", "0 2.5 0");
+                background.setAttribute("look-at", "[gps-camera]");
+                background.setAttribute("rotation", "0 30 0");
 
-                const plane = document.createElement("a-plane");
-                plane.setAttribute("width", "6");
-                plane.setAttribute("height", "2");
-                plane.setAttribute("color", "white");
-                plane.setAttribute("position", "0 3 0");
-                plane.setAttribute("look-at", "[gps-camera]");
-
-                const popupText = document.createElement("a-text");
-                popupText.setAttribute("value", lastWord);
-                popupText.setAttribute("color", "black");
-                popupText.setAttribute("align", "center");
-                popupText.setAttribute("position", "0 3.1 0");
-
-                popup.appendChild(plane);
-                popup.appendChild(popupText);
-
-                image.addEventListener("click", () => {
-                  document.querySelectorAll("a-entity[id^=popup]").forEach(popup => {
-                    popup.setAttribute("visible", "false");
-                  });
-
-                  const currentPopup = document.querySelector(`#popup${index}`);
-                  currentPopup.setAttribute(
-                    "visible",
-                    currentPopup.getAttribute("visible") === "true" ? "false" : "true"
-                  );
-                });
-
+                const text = document.createElement("a-text");
+                text.setAttribute("value", lastWord);
+                text.setAttribute("color", "black");
+                text.setAttribute("align", "center");
+                text.setAttribute("position", "0 2.5 0");
+                text.setAttribute("look-at", "[gps-camera]");
+                text.setAttribute("rotation", "0 30 0");
+                
                 entity.appendChild(image);
-                entity.appendChild(popup);
+                entity.appendChild(background);
+                entity.appendChild(text);
 
                 scene.appendChild(entity);
               });
