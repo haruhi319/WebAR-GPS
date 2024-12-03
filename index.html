@@ -36,21 +36,23 @@
       </button>
 
       <!-- カメラコンポーネントの修正 -->
-      <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 1000;"></a-camera>
+      <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 2000;"></a-camera>
       
       <!-- 正しいgeometryタイプを設定 -->
       <a-entity gps-entity-place="latitude: 35.6174073; longitude: 139.6618322;">
         <a-image
           src="https://haruhi319.github.io/WebAR-GPS/pin.png"
           position="0 1 0"
-          scale="2 2 2">
+          look-at="[gps-camera]"
+          scale="5 5 5">
         </a-image>
         <a-text
           value="テスト中AR"
-          position="0 -1 0"
+          position="0 2 0"
           align="center"
           color="black"
-          width="4">
+          look-at="[gps-camera]"
+          width="8">
         </a-text>
       </a-entity>
     </a-scene>
