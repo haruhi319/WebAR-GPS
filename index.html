@@ -82,21 +82,24 @@
                 const popup = document.createElement("a-entity");
                 popup.setAttribute("id", `popup${index}`);
                 popup.setAttribute("visible", "false"); // 初期状態で非表示
-                popup.innerHTML = `
-                  <a-plane
-                    width="6"
-                    height="2"
-                    color="white"
-                    position="0 3 0"
-                    look-at="[gps-camera]"
-                  ></a-plane>
-                  <a-text
-                    value="${lastWord}"
-                    color="black"
-                    align="center"
-                    position="0 3.1 0"
-                  ></a-text>
-                `;
+
+                // ポップアップの背景
+                const plane = document.createElement("a-plane");
+                plane.setAttribute("width", "6");
+                plane.setAttribute("height", "2");
+                plane.setAttribute("color", "white");
+                plane.setAttribute("position", "0 3 0");
+                plane.setAttribute("look-at", "[gps-camera]");
+
+                // ポップアップのテキスト
+                const popupText = document.createElement("a-text");
+                popupText.setAttribute("value", lastWord);
+                popupText.setAttribute("color", "black");
+                popupText.setAttribute("align", "center");
+                popupText.setAttribute("position", "0 3.1 0");
+
+                popup.appendChild(plane);
+                popup.appendChild(popupText);
 
                 // イベントリスナー
                 image.addEventListener("click", () => {
@@ -108,6 +111,13 @@
                     currentPopup.setAttribute("visible", "false");
                   }, 5000);
                 });
+
+                // クリックしたポップアップをトグル表示
+                currentPopup.setAttribute(
+                  "visible",
+                  currentPopup.getAttribute("visible") === "true" ? "false" : "true"
+                );
+              });
 
                 // エンティティに追加
                 entity.appendChild(image);
