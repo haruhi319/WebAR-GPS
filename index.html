@@ -54,7 +54,7 @@
             .then(data => {
               const scene = document.querySelector("a-scene");
 
-              data.features.forEach(feature => {
+              data.features.forEach((feature,index) => {
                 const { attributes, geometry } = feature;
 
                 // 緯度と経度を取得
@@ -75,17 +75,39 @@
                 image.setAttribute("position", "0 1 0");
                 image.setAttribute("look-at", "[gps-camera]");
                 image.setAttribute("scale", "20 20 20");
+                image.setAttribute("class", "clickable");
+                image.setAttribute("data-popup", `popup${index}`); // ポップアップを紐付け
 
                 // テキスト
-                const text = document.createElement("a-text");
-                text.setAttribute("value", `${lastWord}`);
-                text.setAttribute("font", "noto-sans-cjk-jp-msdf.json");
-                text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
-                text.setAttribute("negate", "false");
-                text.setAttribute("color", "black");
-                text.setAttribute("scale", "12 12 6");
-                text.setAttribute("position", "0 3 0");
-                text.setAttribute("look-at", "[gps-camera]");
+                const popup = document.createElement("a-entity");
+                popup.setAttribute("id", `popup${index}`);
+                popup.setAttribute("visible", "false"); // 初期状態で非表示
+                popup.innerHTML = `
+                  <a-plane
+                    width="6"
+                    height="2"
+                    color="white"
+                    position="0 3 0"
+                    look-at="[gps-camera]"
+                  ></a-plane>
+                  <a-text
+                    value="${lastWord}"
+                    color="black"
+                    align="center"
+                    position="0 3.1 0"
+                  ></a-text>
+                `;
+
+                // イベントリスナー
+                image.addEventListener("click", () => {
+                  const currentPopup = document.querySelector(`#popup${index}`);
+                  currentPopup.setAttribute("visible", "true");
+
+                  // 一定時間後に非表示にする
+                  setTimeout(() => {
+                    currentPopup.setAttribute("visible", "false");
+                  }, 5000);
+                });
 
                 // エンティティに追加
                 entity.appendChild(image);
