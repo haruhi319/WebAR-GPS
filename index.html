@@ -64,7 +64,7 @@
                 image.setAttribute("src", "https://haruhi319.github.io/WebAR-GPS/pin.png");
                 image.setAttribute("position", "0 1 0");
                 image.setAttribute("look-at", "[gps-camera]");
-                image.setAttribute("rotation", "0 30 0");
+                image.setAttribute("rotation", "0 -30 0");
                 image.setAttribute("scale", "16 16 16");
 
                 const background = document.createElement("a-plane");
@@ -73,7 +73,7 @@
                 background.setAttribute("height", "2");
                 background.setAttribute("position", "0 2.5 0");
                 background.setAttribute("look-at", "[gps-camera]");
-                background.setAttribute("rotation", "0 30 0");
+                background.setAttribute("rotation", "0 -30 0");
 
                 const text = document.createElement("a-text");
                 text.setAttribute("value", lastWord);
@@ -81,7 +81,7 @@
                 text.setAttribute("align", "center");
                 text.setAttribute("position", "0 2.5 0");
                 text.setAttribute("look-at", "[gps-camera]");
-                text.setAttribute("rotation", "0 30 0");
+                text.setAttribute("rotation", "0 -30 0");
                 
                 entity.appendChild(image);
                 entity.appendChild(background);
