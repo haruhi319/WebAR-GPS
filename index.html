@@ -30,60 +30,47 @@
         arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false"
         renderer="antialias: true; alpha: true"
     >
-      <!-- 位置情報を取得するためのボタン -->
       <button id="startBtn" style="position: absolute; z-index: 100; top: 10px; left: 10px; padding: 10px; background-color: #007bff; color: white; border-radius: 5px; border: none;">
         Start AR
       </button>
-
-      <!-- カメラコンポーネント -->
       <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 2000;"></a-camera>
     </a-scene>
 
     <script>
-      // ボタンがクリックされたときに位置情報を取得
       document.getElementById("startBtn").addEventListener("click", function () {
-        // 位置情報を取得
         navigator.geolocation.getCurrentPosition(function (position) {
           const userLat = position.coords.latitude;
           const userLon = position.coords.longitude;
           console.log(`User's location: ${userLat}, ${userLon}`);
           
-          // JSONファイルを取得してエンティティを作成
           fetch('suirotuuhou.json')
             .then(response => response.json())
             .then(data => {
               const scene = document.querySelector("a-scene");
 
-              data.features.forEach((feature,index) => {
+              data.features.forEach((feature, index) => {
                 const { attributes, geometry } = feature;
 
-                // 緯度と経度を取得
                 const lat = geometry.y;
                 const lng = geometry.x;
 
-                // 名前の最後の単語を取得
                 const nameParts = attributes.name.split(/[\s　、,、\-]+/);
                 const lastWord = nameParts[nameParts.length - 1];
 
-                // A-Frameエンティティを作成
                 const entity = document.createElement("a-entity");
                 entity.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng}`);
-                
-                // 画像
+
                 const image = document.createElement("a-image");
                 image.setAttribute("src", "https://haruhi319.github.io/WebAR-GPS/pin.png");
                 image.setAttribute("position", "0 1 0");
                 image.setAttribute("look-at", "[gps-camera]");
                 image.setAttribute("scale", "20 20 20");
                 image.setAttribute("class", "clickable");
-                image.setAttribute("data-popup", `popup${index}`); // ポップアップを紐付け
 
-                // テキスト
                 const popup = document.createElement("a-entity");
                 popup.setAttribute("id", `popup${index}`);
-                popup.setAttribute("visible", "false"); // 初期状態で非表示
+                popup.setAttribute("visible", "false");
 
-                // ポップアップの背景
                 const plane = document.createElement("a-plane");
                 plane.setAttribute("width", "6");
                 plane.setAttribute("height", "2");
@@ -91,7 +78,6 @@
                 plane.setAttribute("position", "0 3 0");
                 plane.setAttribute("look-at", "[gps-camera]");
 
-                // ポップアップのテキスト
                 const popupText = document.createElement("a-text");
                 popupText.setAttribute("value", lastWord);
                 popupText.setAttribute("color", "black");
@@ -101,29 +87,21 @@
                 popup.appendChild(plane);
                 popup.appendChild(popupText);
 
-                // イベントリスナー
                 image.addEventListener("click", () => {
-                  const currentPopup = document.querySelector(`#popup${index}`);
-                  currentPopup.setAttribute("visible", "true");
+                  document.querySelectorAll("a-entity[id^=popup]").forEach(popup => {
+                    popup.setAttribute("visible", "false");
+                  });
 
-                  // 一定時間後に非表示にする
-                  setTimeout(() => {
-                    currentPopup.setAttribute("visible", "false");
-                  }, 5000);
+                  const currentPopup = document.querySelector(`#popup${index}`);
+                  currentPopup.setAttribute(
+                    "visible",
+                    currentPopup.getAttribute("visible") === "true" ? "false" : "true"
+                  );
                 });
 
-                // クリックしたポップアップをトグル表示
-                currentPopup.setAttribute(
-                  "visible",
-                  currentPopup.getAttribute("visible") === "true" ? "false" : "true"
-                );
-              });
-
-                // エンティティに追加
                 entity.appendChild(image);
-                entity.appendChild(text);
+                entity.appendChild(popup);
 
-                // シーンに追加
                 scene.appendChild(entity);
               });
             })
