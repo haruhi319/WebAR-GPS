@@ -79,7 +79,7 @@
                 text.setAttribute("align", "center");
                 text.setAttribute("width", "12");
                 text.setAttribute("scale", "4 4 4");
-                text.setAttribute("position", "0 12 0");
+                text.setAttribute("position", "0 12 1");
                 text.setAttribute("look-at", "[gps-camera]");
                 text.setAttribute("rotation", "0 -60 0");
 
@@ -88,7 +88,7 @@
                 text.setAttribute("negate", "false");
 
                 // テキストの幅を取得して背景の幅を動的に調整
-                const textWidth = lastWord.length * 5; // 長さに基づく計算（調整可能）
+                const textWidth = lastWord.length * 3; // 長さに基づく計算（調整可能）
                 background.setAttribute("width", textWidth); // 背景の幅をテキストに合わせる
                 background.setAttribute("height", "3"); // 高さは固定
                 
