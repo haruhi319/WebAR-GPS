@@ -71,7 +71,7 @@
                 background.setAttribute("color", "white");
                 background.setAttribute("width", "6");
                 background.setAttribute("height", "2");
-                background.setAttribute("position", "0 8 0");
+                background.setAttribute("position", "0 12 0");
                 background.setAttribute("look-at", "[gps-camera]");
                 background.setAttribute("rotation", "0 -30 0");
 
@@ -79,11 +79,15 @@
                 text.setAttribute("value", lastWord);
                 text.setAttribute("color", "black");
                 text.setAttribute("align", "center");
-                text.setAttribute("width", "6");
-                text.setAttribute("scale", "2 2 2");
-                text.setAttribute("position", "0 8 0");
+                text.setAttribute("width", "12");
+                text.setAttribute("scale", "4 4 4");
+                text.setAttribute("position", "0 12 0");
                 text.setAttribute("look-at", "[gps-camera]");
                 text.setAttribute("rotation", "0 -30 0");
+
+                text.setAttribute("font", "noto-sans-cjk-jp-msdf.json");
+                text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
+                text.setAttribute("negate", "false");
                 
                 entity.appendChild(image);
                 entity.appendChild(background);
