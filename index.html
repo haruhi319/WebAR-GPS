@@ -30,18 +30,15 @@
         arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false"
         renderer="antialias: true; alpha: true"
     >
-      <button id="startBtn" style="position: absolute; z-index: 100; top: 10px; left: 10px; padding: 10px; background-color: #007bff; color: white; border-radius: 5px; border: none;">
-        Start AR
-      </button>
       <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 2000;"></a-camera>
     </a-scene>
 
     <script>
-      document.getElementById("startBtn").addEventListener("click", function () {
+      function updateLocation() {
         navigator.geolocation.getCurrentPosition(function (position) {
           const userLat = position.coords.latitude;
           const userLon = position.coords.longitude;
-          console.log(`User's location: ${userLat}, ${userLon}`);
+          console.log(`User's updated location: ${userLat}, ${userLon}`);
           
           fetch('suirotuuhou.json')
             .then(response => response.json())
@@ -71,7 +68,6 @@
                 background.setAttribute("color", "white");
                 background.setAttribute("position", "0 12 0");
                 background.setAttribute("look-at", "[gps-camera]");
-                background.setAttribute("rotation", "0 -60 0");
 
                 const text = document.createElement("a-text");
                 text.setAttribute("value", lastWord);
@@ -81,8 +77,7 @@
                 text.setAttribute("scale", "4 4 4");
                 text.setAttribute("position", "1 12 0");
                 text.setAttribute("look-at", "[gps-camera]");
-                text.setAttribute("rotation", "0 -60 0");
-
+                
                 text.setAttribute("font", "noto-sans-cjk-jp-msdf.json");
                 text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
                 text.setAttribute("negate", "false");
