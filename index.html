@@ -39,11 +39,15 @@
           const userLat = position.coords.latitude;
           const userLon = position.coords.longitude;
           console.log(`User's updated location: ${userLat}, ${userLon}`);
-          
+
           fetch('suirotuuhou.json')
             .then(response => response.json())
             .then(data => {
               const scene = document.querySelector("a-scene");
+
+              // Clear previous entities before adding new ones
+              const existingEntities = scene.querySelectorAll("a-entity");
+              existingEntities.forEach(entity => entity.remove());
 
               data.features.forEach((feature, index) => {
                 const { attributes, geometry } = feature;
@@ -51,7 +55,7 @@
                 const lat = geometry.y;
                 const lng = geometry.x;
 
-                const nameParts = attributes.name.split(/[\s　、,、\-]+/);
+                const nameParts = attributes.name.split(/[\s　,\-]+/); // Handles spaces and common delimiters
                 const lastWord = nameParts[nameParts.length - 1];
 
                 const entity = document.createElement("a-entity");
@@ -61,7 +65,6 @@
                 image.setAttribute("src", "https://haruhi319.github.io/WebAR-GPS/pin.png");
                 image.setAttribute("position", "0 1 0");
                 image.setAttribute("look-at", "[gps-camera]");
-                image.setAttribute("rotation", "0 -30 0");
                 image.setAttribute("scale", "16 16 16");
 
                 const background = document.createElement("a-plane");
@@ -82,11 +85,11 @@
                 text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
                 text.setAttribute("negate", "false");
 
-                // テキストの幅を取得して背景の幅を動的に調整
-                const textWidth = lastWord.length * 3; // 長さに基づく計算（調整可能）
-                background.setAttribute("width", textWidth); // 背景の幅をテキストに合わせる
-                background.setAttribute("height", "3"); // 高さは固定
-                
+                // Calculate text width dynamically based on content
+                const textWidth = lastWord.length * 3; // Adjust factor as needed
+                background.setAttribute("width", textWidth);
+                background.setAttribute("height", "3");
+
                 entity.appendChild(image);
                 entity.appendChild(background);
                 entity.appendChild(text);
@@ -99,6 +102,9 @@
           console.error('Geolocation error:', error);
         });
       };
+
+      // Automatically update location every 3 seconds
+      setInterval(updateLocation, 3000);
     </script>
   </body>
 </html>
