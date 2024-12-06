@@ -37,30 +37,31 @@
     </a-scene>
 
     <script>
-      const startButton = document.getElementById("startBtn");
-      let userLat, userLon;
+    const startButton = document.getElementById("startBtn");
+    let userLat, userLon;
 
-      function updateLookAt(cameraPosition, entity) {
-        const dx = cameraPosition.x - entity.object3D.position.x;
-        const dz = cameraPosition.z - entity.object3D.position.z;
-        const rotationY = Math.atan2(dx, dz) * (180 / Math.PI);
-        entity.object3D.rotation.set(0, rotationY, 0);
-      }
+    // カメラ方向を計算してオブジェクトを回転させる関数
+    function updateLookAt(cameraPosition, entity) {
+      const dx = cameraPosition.x - entity.object3D.position.x;
+      const dz = cameraPosition.z - entity.object3D.position.z;
+      const rotationY = Math.atan2(dx, dz) * (180 / Math.PI);
+      entity.object3D.rotation.set(0, rotationY * (Math.PI / 180), 0);
+    }
 
-      startButton.addEventListener("click", function () {
-        navigator.geolocation.getCurrentPosition(function (position) {
+    startButton.addEventListener("click", function () {
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
           userLat = position.coords.latitude;
           userLon = position.coords.longitude;
           console.log(`Initial user location: ${userLat}, ${userLon}`);
-          
-          fetch('suirotuuhou.json')
-            .then(response => response.json())
-            .then(data => {
+
+          fetch("suirotuuhou.json")
+            .then((response) => response.json())
+            .then((data) => {
               const scene = document.querySelector("a-scene");
 
               data.features.forEach((feature) => {
                 const { attributes, geometry } = feature;
-
                 const lat = geometry.y;
                 const lng = geometry.x;
 
@@ -68,93 +69,64 @@
                 const lastWord = nameParts[nameParts.length - 1];
 
                 const entity = document.createElement("a-entity");
-                entity.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng}`);
+                entity.setAttribute(
+                  "gps-entity-place",
+                  `latitude: ${lat}; longitude: ${lng}`
+                );
 
                 const image = document.createElement("a-image");
                 image.setAttribute("src", "https://haruhi319.github.io/WebAR-GPS/pin.png");
                 image.setAttribute("position", "0 1 0");
-                image.setAttribute("look-at", "[gps-camera]");
                 image.setAttribute("scale", "20 20 20");
 
                 const background = document.createElement("a-plane");
                 background.setAttribute("color", "white");
-                background.setAttribute("position", "0 15 0"); // 背景を少し上に
-                background.setAttribute("look-at", "[gps-camera]");
-                background.setAttribute("depth", "0.1"); // Z軸で奥行き調整
+                background.setAttribute("position", "0 15 -0.1");
+                background.setAttribute("width", lastWord.length * 5);
+                background.setAttribute("height", "6");
 
                 const text = document.createElement("a-text");
-                text.setAttribute("value", lastWord); // 日本語テキストを設定
+                text.setAttribute("value", lastWord); // 日本語テキスト
                 text.setAttribute("color", "black");
                 text.setAttribute("align", "center");
                 text.setAttribute("scale", "18 18 18");
-                text.setAttribute("position", "0 15 0"); // テキストを背景の上に配置
-                text.setAttribute("look-at", "[gps-camera]");
-
-                // 日本語フォントの設定
+                text.setAttribute("position", "0 15 0");
                 text.setAttribute("font", "noto-sans-cjk-jp-msdf.json");
                 text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
                 text.setAttribute("negate", "false");
 
-                // テキストの幅を取得して背景の幅を動的に調整
-                const textWidth = lastWord.length * 5; // 長さに基づく計算（調整可能）
-                background.setAttribute("width", textWidth); // 背景の幅をテキストに合わせる
-                background.setAttribute("height", "6"); // 高さは固定
-
+                // エンティティの子要素として追加
                 entity.appendChild(image);
                 entity.appendChild(background);
                 entity.appendChild(text);
-
                 scene.appendChild(entity);
 
-                console.log("Creating text entity with value:", lastWord);
-              });
-            })
-            .catch(error => console.error('Error fetching JSON:', error));
-
-        setInterval(() => {
-            navigator.geolocation.getCurrentPosition(function (newPosition) {
-              userLat = newPosition.coords.latitude;
-              userLon = newPosition.coords.longitude;
-              console.log(`Updated user location: ${userLat}, ${userLon}`);
-
-              const camera = document.querySelector("a-camera");
-              const cameraPosition = camera.object3D.position;
-
-              const entities = document.querySelectorAll("a-entity");
-              entities.forEach(entity => updateLookAt(cameraPosition, entity));
-            });
-            navigator.geolocation.watchPosition((position) => {
-              const userLat = position.coords.latitude;
-              const userLon = position.coords.longitude;
-
-              document.querySelectorAll("a-entity").forEach((entity) => {
-                // テキストの再設定
-                const text = entity.querySelector("a-text");
-                if (text) {
-                  text.setAttribute("value", text.getAttribute("value")); // 再描画をトリガー
-                }
-
-                // look-at の更新
-                entity.querySelectorAll("a-text, a-plane, a-image").forEach((el) => {
-                  el.setAttribute("look-at", "[gps-camera]");
+                console.log("Entity created:", {
+                  textValue: lastWord,
+                  gpsPlace: entity.getAttribute("gps-entity-place"),
                 });
               });
-            }, (error) => {
-              console.error("Geolocation error:", error);
-            });
-          }, 5000); // 更新間隔 (5秒)
-        setInterval(() => {
-          document.querySelectorAll("a-text, a-plane").forEach((el) => {
-            el.setAttribute("look-at", "[gps-camera]");
-          });
-        }, 1000); // 1秒ごとに更新
 
-        }, function (error) {
-          console.error('Geolocation error:', error);
-        });
+              // 定期的にupdateLookAtを呼び出して向きを更新
+              setInterval(() => {
+                const camera = document.querySelector("a-camera");
+                const cameraPosition = camera.object3D.position;
 
-        startButton.style.display = "none";
-      });
+                const entities = document.querySelectorAll("a-entity");
+                entities.forEach((entity) => {
+                  updateLookAt(cameraPosition, entity);
+                });
+              }, 1000); // 1秒ごとに更新
+            })
+            .catch((error) => console.error("Error fetching JSON:", error));
+        },
+        function (error) {
+          console.error("Geolocation error:", error);
+        }
+      );
+
+      startButton.style.display = "none";
+    });
     </script>
   </body>
 </html>
