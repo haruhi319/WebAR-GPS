@@ -123,7 +123,32 @@
               const entities = document.querySelectorAll("a-entity");
               entities.forEach(entity => updateLookAt(cameraPosition, entity));
             });
+            navigator.geolocation.watchPosition((position) => {
+              const userLat = position.coords.latitude;
+              const userLon = position.coords.longitude;
+
+              document.querySelectorAll("a-entity").forEach((entity) => {
+                // テキストの再設定
+                const text = entity.querySelector("a-text");
+                if (text) {
+                  text.setAttribute("value", text.getAttribute("value")); // 再描画をトリガー
+                }
+
+                // look-at の更新
+                entity.querySelectorAll("a-text, a-plane, a-image").forEach((el) => {
+                  el.setAttribute("look-at", "[gps-camera]");
+                });
+              });
+            }, (error) => {
+              console.error("Geolocation error:", error);
+            });
           }, 5000); // 更新間隔 (5秒)
+        setInterval(() => {
+          document.querySelectorAll("a-text, a-plane").forEach((el) => {
+            el.setAttribute("look-at", "[gps-camera]");
+          });
+        }, 1000); // 1秒ごとに更新
+
         }, function (error) {
           console.error('Geolocation error:', error);
         });
