@@ -35,7 +35,6 @@
       </button>
       <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 5000;" far="10000"></a-camera>
     </a-scene>
-
     <script>
     const startButton = document.getElementById("startBtn");
     let userLat, userLon;
@@ -46,6 +45,22 @@
       const dz = cameraPosition.z - entity.object3D.position.z;
       const rotationY = Math.atan2(dx, dz) * (180 / Math.PI);
       entity.object3D.rotation.set(0, rotationY * (Math.PI / 180), 0);
+    }
+
+    // 2点間の距離を計算する関数 (緯度経度を渡す)
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // 地球の半径 (メートル)
+      const φ1 = (lat1 * Math.PI) / 180;
+      const φ2 = (lat2 * Math.PI) / 180;
+      const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+      const a =
+        Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      return R * c; // 距離 (メートル)
     }
 
     startButton.addEventListener("click", function () {
@@ -67,7 +82,7 @@
 
                 const nameParts = attributes.name.split(/[\s　、,、\-]+/);
                 const lastWord = nameParts[nameParts.length - 1];
-
+                
                 const entity = document.createElement("a-entity");
                 entity.setAttribute(
                   "gps-entity-place",
@@ -95,19 +110,34 @@
                 text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
                 text.setAttribute("negate", "false");
 
+                // 距離表示用テキスト
+                const distanceText = document.createElement("a-text");
+                distanceText.setAttribute("value", ""); // 初期値は空
+                distanceText.setAttribute("color", "blue");  
+                distanceText.setAttribute("align", "center");
+                distanceText.setAttribute("scale", "12 12 12");
+                distanceText.setAttribute("position", "0 10 0"); // 名前の下に配置
+
                 // エンティティの子要素として追加
                 entity.appendChild(image);
                 entity.appendChild(background);
                 entity.appendChild(text);
+                entity.appendChild(distanceText);
                 scene.appendChild(entity);
-
+                
                 console.log("Entity created:", {
                   textValue: lastWord,
                   gpsPlace: entity.getAttribute("gps-entity-place"),
                 });
+
+                // 定期的に距離を更新する
+                setInterval(() => {
+                  const distance = calculateDistance(userLat, userLon, lat, lng);
+                  distanceText.setAttribute("value", `${Math.round(distance)}m`);
+                }, 1000); // 1秒ごとに更新
               });
 
-              // 定期的にupdateLookAtを呼び出して向きを更新
+              // 定期的に向きを更新
               setInterval(() => {
                 const camera = document.querySelector("a-camera");
                 const cameraPosition = camera.object3D.position;
