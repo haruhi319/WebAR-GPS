@@ -55,7 +55,7 @@
         arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: true;" 
         renderer="antialias: true; alpha: true;"  <!-- alphaをtrueにして透明背景 -->
     >
-      <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 1000;"></a-camera>
+      <a-camera gps-camera="minDistance: 1; maxDistance: 1000;"look-controls="enabled: true" position="0 0 0"></a-camera>
     </a-scene>
 
     <script>
@@ -114,21 +114,26 @@
                   background.setAttribute("color", "white");  // 背景色を白に変更
                   background.setAttribute("position", "0 12 0");
                   background.setAttribute("look-at", "[gps-camera]");
-                  background.setAttribute("width", "12");
-                  background.setAttribute("height", "4");
-
+                  background.setAttribute("depth", "0.1");
+                  
                   // テキスト要素の作成
                   const text = document.createElement("a-text");
                   text.setAttribute("value", lastWord); // 抽出した文字
                   text.setAttribute("color", "black");
                   text.setAttribute("align", "center");
                   text.setAttribute("scale", "4 4 2");
-                  text.setAttribute("position", "0 2 0");  // Adjust position for visibility
+                  text.setAttribute("position", "0 12 0");  // Adjust position for visibility
                   text.setAttribute("look-at", "[gps-camera]");
 
                   // フォントの指定
                   text.setAttribute("font", "noto-sans-cjk-jp-msdf.json");
                   text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
+                  text.setAttribute("negate", "false");
+
+                  // テキストの幅を取得して背景の幅を動的に調整
+                  const textWidth = lastWord.length * 1.2; // テキストの長さに基づき背景幅を調整
+                  background.setAttribute("width", textWidth); // 背景の幅をテキストの長さに合わせる
+                  background.setAttribute("height", "1.2"); // 高さは固定
 
                   // 子要素を親エンティティに追加
                   entity.appendChild(image);       // 画像
