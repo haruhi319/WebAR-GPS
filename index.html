@@ -64,10 +64,14 @@
               
               data.features.forEach((feature, index) => {
                 const { attributes, geometry } = feature;
+
+                // Adjust lat/lng based on actual JSON structure
                 const lat = geometry.y;
                 const lng = geometry.x;
                 const nameParts = attributes.name.split(/[\s　,\-]+/); // Handles spaces and common delimiters
                 const lastWord = nameParts[nameParts.length - 1];
+
+                console.log(`Entity Location: ${lat}, ${lng}, Last Word: ${lastWord}`);
 
                 // エンティティの作成
                 const entity = document.createElement("a-entity");
@@ -101,7 +105,7 @@
                 text.setAttribute("align", "center");
                 text.setAttribute("width", "12");
                 text.setAttribute("scale", "4 4 2");
-                text.setAttribute("position", "0 12 0");
+                text.setAttribute("position", "0 13 0");  // Adjust position for visibility
                 text.setAttribute("look-at", "[gps-camera]");
 
                 // フォントの指定
