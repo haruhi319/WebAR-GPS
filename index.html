@@ -37,11 +37,21 @@
     </a-scene>
 
     <script>
-      document.getElementById("startBtn").addEventListener("click", function () {
+      const startButton = document.getElementById("startBtn");
+      let userLat, userLon;
+
+      function updateLookAt(cameraPosition, entity) {
+        const dx = cameraPosition.x - entity.object3D.position.x;
+        const dz = cameraPosition.z - entity.object3D.position.z;
+        const rotationY = Math.atan2(dx, dz) * (180 / Math.PI);
+        entity.object3D.rotation.set(0, rotationY, 0);
+      }
+
+      startButton.addEventListener("click", function () {
         navigator.geolocation.getCurrentPosition(function (position) {
-          const userLat = position.coords.latitude;
-          const userLon = position.coords.longitude;
-          console.log(`User's location: ${userLat}, ${userLon}`);
+          userLat = position.coords.latitude;
+          userLon = position.coords.longitude;
+          console.log(`Initial user location: ${userLat}, ${userLon}`);
           
           fetch('suirotuuhou.json')
             .then(response => response.json())
@@ -68,7 +78,7 @@
 
                 const background = document.createElement("a-plane");
                 background.setAttribute("color", "white");
-                background.setAttribute("position", "0 2.5 0"); // 背景を少し上に
+                background.setAttribute("position", "0 12 0"); // 背景を少し上に
                 background.setAttribute("look-at", "[gps-camera]");
                 background.setAttribute("depth", "0.1"); // Z軸で奥行き調整
 
@@ -77,9 +87,8 @@
                 text.setAttribute("color", "black");
                 text.setAttribute("align", "center");
                 text.setAttribute("scale", "2 2 2");
-                text.setAttribute("position", "0 2.6 0"); // テキストを背景の上に配置
+                text.setAttribute("position", "0 12 0"); // テキストを背景の上に配置
                 text.setAttribute("look-at", "[gps-camera]");
-                text.setAttribute("rotation", "0 30 0");
 
                 // 日本語フォントの設定
                 text.setAttribute("font", "noto-sans-cjk-jp-msdf.json");
@@ -99,9 +108,25 @@
               });
             })
             .catch(error => console.error('Error fetching JSON:', error));
+
+        setInterval(() => {
+            navigator.geolocation.getCurrentPosition(function (newPosition) {
+              userLat = newPosition.coords.latitude;
+              userLon = newPosition.coords.longitude;
+              console.log(`Updated user location: ${userLat}, ${userLon}`);
+
+              const camera = document.querySelector("a-camera");
+              const cameraPosition = camera.object3D.position;
+
+              const entities = document.querySelectorAll("a-entity");
+              entities.forEach(entity => updateLookAt(cameraPosition, entity));
+            });
+          }, 5000); // 更新間隔 (5秒)
         }, function (error) {
           console.error('Geolocation error:', error);
         });
+
+        startButton.style.display = "none";
       });
     </script>
   </body>
