@@ -61,7 +61,7 @@
               // Clear previous entities before adding new ones
               const existingEntities = scene.querySelectorAll("a-entity");
               existingEntities.forEach(entity => entity.remove());
-
+              
               data.features.forEach((feature, index) => {
                 const { attributes, geometry } = feature;
 
@@ -71,42 +71,49 @@
                 const nameParts = attributes.name.split(/[\s　,\-]+/); // Handles spaces and common delimiters
                 const lastWord = nameParts[nameParts.length - 1];
 
+  // エンティティの作成
                 const entity = document.createElement("a-entity");
                 entity.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng}`);
 
+  // 画像要素の作成
                 const image = document.createElement("a-image");
                 image.setAttribute("src", "https://haruhi319.github.io/WebAR-GPS/pin.png");
                 image.setAttribute("position", "0 1 0");
                 image.setAttribute("look-at", "[gps-camera]");
                 image.setAttribute("scale", "16 16 16");
 
+  // 背景要素の作成
                 const background = document.createElement("a-plane");
                 background.setAttribute("color", "white");
                 background.setAttribute("position", "0 12 0");
                 background.setAttribute("look-at", "[gps-camera]");
 
+  // テキスト要素の作成
                 const text = document.createElement("a-text");
-                text.setAttribute("value", lastWord);
+                text.setAttribute("value", lastWord); // 抽出した文字列
                 text.setAttribute("color", "black");
                 text.setAttribute("align", "center");
                 text.setAttribute("width", "12");
                 text.setAttribute("scale", "4 4 2");
-                text.setAttribute("position", "1 12 0");
+                text.setAttribute("position", "0 12 0");
                 text.setAttribute("look-at", "[gps-camera]");
-                
+
+  // フォントの指定
                 text.setAttribute("font", "noto-sans-cjk-jp-msdf.json");
                 text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
                 text.setAttribute("negate", "false");
-                
-                // Calculate text width dynamically based on content
+
+  // 動的幅計算
                 const textWidth = lastWord.length * 3; // Adjust factor as needed
                 background.setAttribute("width", textWidth);
                 background.setAttribute("height", "3");
 
-                entity.appendChild(image);
-                entity.appendChild(background);
-                entity.appendChild(text);
+  // 子要素を親エンティティに追加
+                entity.appendChild(image);       // 画像
+                entity.appendChild(background);  // 背景
+                entity.appendChild(text);        // テキスト
 
+  // a-scene にエンティティを追加
                 scene.appendChild(entity);
               });
             })
