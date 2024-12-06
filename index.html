@@ -115,8 +115,13 @@
                 distanceText.setAttribute("value", ""); // 初期値は空
                 distanceText.setAttribute("color", "blue");  
                 distanceText.setAttribute("align", "center");
-                distanceText.setAttribute("scale", "12 12 12");
-                distanceText.setAttribute("position", "0 10 0"); // 名前の下に配置
+                distanceText.setAttribute("scale", "15 15 15");
+                distanceText.setAttribute("position", "0 6 0"); // 名前の下に配置
+
+                const distanceTextValue = distance >= 1000 
+                  ? `${(distance / 1000).toFixed(1)}km`
+                  : `${Math.round(distance)}m`;
+                distanceText.setAttribute("value", distanceTextValue);
 
                 // エンティティの子要素として追加
                 entity.appendChild(image);
