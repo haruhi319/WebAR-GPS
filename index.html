@@ -34,6 +34,7 @@
         position: absolute;
         top: 0;
         left: 0;
+        background-color: transparent; /* 背景色を透明に設定 */
       }
 
       #start-button {
@@ -118,10 +119,10 @@
 
                   // テキスト要素の作成
                   const text = document.createElement("a-text");
-                  text.setAttribute("value", lastWord); // 抽出した文字列
+                  text.setAttribute("value", lastWord); // 抽出した文字
                   text.setAttribute("align", "center");
                   text.setAttribute("scale", "4 4 2");
-                  text.setAttribute("position", "0 12.5 0");  // Adjust position for visibility
+                  text.setAttribute("position", "0 2 0");  // Adjust position for visibility
                   text.setAttribute("look-at", "[gps-camera]");
 
                   // フォントの指定
