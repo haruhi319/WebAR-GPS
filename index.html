@@ -108,10 +108,17 @@
                   image.setAttribute("look-at", "[gps-camera]");
                   image.setAttribute("scale", "16 16 16");
 
+                  // 背景要素の作成
+                  const background = document.createElement("a-plane");
+                  background.setAttribute("color", "white");  // 背景色を白に変更
+                  background.setAttribute("position", "0 12 0");
+                  background.setAttribute("look-at", "[gps-camera]");
+                  background.setAttribute("width", "12");
+                  background.setAttribute("height", "4");
+
                   // テキスト要素の作成
                   const text = document.createElement("a-text");
                   text.setAttribute("value", lastWord); // 抽出した文字列
-                  text.setAttribute("color", "black");  // テキストの色を黒に
                   text.setAttribute("align", "center");
                   text.setAttribute("scale", "4 4 2");
                   text.setAttribute("position", "0 12.5 0");  // Adjust position for visibility
@@ -123,6 +130,7 @@
 
                   // 子要素を親エンティティに追加
                   entity.appendChild(image);       // 画像
+                  entity.appendChild(background);  // 背景
                   entity.appendChild(text);        // テキスト
 
                   // a-scene にエンティティを追加
