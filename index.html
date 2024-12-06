@@ -48,10 +48,11 @@
       });
 
       function updateLocation() {
-        navigator.geolocation.getCurrentPosition(function (position) {
-          const userLat = position.coords.latitude;
-          const userLon = position.coords.longitude;
-          console.log(`User's updated location: ${userLat}, ${userLon}`);
+        navigator.geolocation.getCurrentPosition(
+          function (position) {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+            console.log(`User's updated location: ${userLat}, ${userLon}`);
 
           fetch('suirotuuhou.json')
             .then((response) => response.json())
@@ -130,8 +131,17 @@
             .catch(error => console.error('Error fetching JSON:', error));
         }, function (error) {
           console.error('Geolocation error:', error);
-        });
-      };
+            alert("位置情報の取得に失敗しました。位置情報の取得を許可しているか確認してください。");
+          },
+          {
+            timeout: 10000,  // 10秒のタイムアウト設定
+            enableHighAccuracy: true,  // 高精度な位置情報を要求
+          }
+        );
+      }
+
+      // 自動で位置情報を3秒ごとに更新（必要ならこの機能を削除）
+      setInterval(updateLocation, 3000);
     </script>
   </body>
 </html>
