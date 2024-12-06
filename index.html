@@ -25,15 +25,28 @@
     </style>
   </head>
   <body>
+    <button id="start-button">位置情報を取得</button>
     <a-scene
         vr-mode-ui="enabled: false"
         arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false"
         renderer="antialias: true; alpha: true"
     >
-      <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 2000;"></a-camera>
+      <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 1000;"></a-camera>
     </a-scene>
 
     <script>
+      let autoUpdateInterval;
+      document.getElementById("start-button").addEventListener("click", () => {
+        // 最初の位置情報取得
+        updateLocation();
+
+        // 3秒ごとに位置情報を更新
+        autoUpdateInterval = setInterval(updateLocation, 3000);
+
+        // ボタンを無効化
+        document.getElementById("start-button").disabled = true;
+      });
+      
       function updateLocation() {
         navigator.geolocation.getCurrentPosition(function (position) {
           const userLat = position.coords.latitude;
