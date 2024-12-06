@@ -105,6 +105,8 @@
                 entity.appendChild(text);
 
                 scene.appendChild(entity);
+
+                console.log("Creating text entity with value:", lastWord);
               });
             })
             .catch(error => console.error('Error fetching JSON:', error));
