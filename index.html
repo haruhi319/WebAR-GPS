@@ -54,8 +54,8 @@
           console.log(`User's updated location: ${userLat}, ${userLon}`);
 
           fetch('suirotuuhou.json')
-            .then(response => response.json())
-            .then(data => {
+            .then((response) => response.json())
+            .then((data) => {
               const scene = document.querySelector("a-scene");
 
               // Clear previous entities before adding new ones
@@ -99,7 +99,7 @@
                 text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
                 text.setAttribute("negate", "false");
 
-                document.querySelector("a-scene").appendChild(textEntity);
+                document.querySelector("a-scene").appendChild(text);
               } catch (error) {
                 console.error("Failed to create text entity:", error);
               }
