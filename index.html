@@ -49,13 +49,13 @@
     </style>
   </head>
   <body>
-    <button id="start-button">位置情報を取得</button>
     <a-scene
         vr-mode-ui="enabled: false"
-        arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: true;" 
+        arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;" 
         renderer="antialias: true; alpha: true;"  <!-- alphaをtrueにして透明背景 -->
     >
-      <a-camera gps-camera="minDistance: 1; maxDistance: 1000;"look-controls="enabled: true" position="0 0 0"></a-camera>
+      <button id="start-button">位置情報を取得</button>
+      <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 1000;"look-controls="enabled: true" position="0 0 0"></a-camera>
     </a-scene>
 
     <script>
@@ -107,12 +107,12 @@
                   image.setAttribute("src", "https://haruhi319.github.io/WebAR-GPS/pin.png");
                   image.setAttribute("position", "0 1 0");
                   image.setAttribute("look-at", "[gps-camera]");
-                  image.setAttribute("scale", "16 16 16");
+                  image.setAttribute("scale", "20 20 20");
 
                   // 背景要素の作成
                   const background = document.createElement("a-plane");
                   background.setAttribute("color", "white");  // 背景色を白に変更
-                  background.setAttribute("position", "0 12 0");
+                  background.setAttribute("position", "0 12 0"); 
                   background.setAttribute("look-at", "[gps-camera]");
                   background.setAttribute("depth", "0.1");
                   
@@ -133,7 +133,7 @@
                   // テキストの幅を取得して背景の幅を動的に調整
                   const textWidth = lastWord.length * 1.2; // テキストの長さに基づき背景幅を調整
                   background.setAttribute("width", textWidth); // 背景の幅をテキストの長さに合わせる
-                  background.setAttribute("height", "1.2"); // 高さは固定
+                  background.setAttribute("height", "3"); // 高さは固定
 
                   // 子要素を親エンティティに追加
                   entity.appendChild(image);       // 画像
