@@ -29,7 +29,7 @@
     <a-scene
         vr-mode-ui="enabled: false"
         arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false"
-        renderer="antialias: true; alpha: true"
+        renderer="antialias: true; alpha: false;"  <!-- alpha: falseに変更 -->
     >
       <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 1000;"></a-camera>
     </a-scene>
@@ -93,16 +93,16 @@
                   console.error("Error loading image");
                 };
 
-                // 背景要素の作成
+                // 背景要素の作成（透明背景に変更）
                 const background = document.createElement("a-plane");
-                background.setAttribute("color", "white");
+                background.setAttribute("color", "transparent");  // 背景を透明に
                 background.setAttribute("position", "0 12 0");
                 background.setAttribute("look-at", "[gps-camera]");
                 
                 // テキスト要素の作成
                 const text = document.createElement("a-text");
                 text.setAttribute("value", lastWord); // 抽出した文字列
-                text.setAttribute("color", "black");
+                text.setAttribute("color", "white");  // テキストを白に変更
                 text.setAttribute("align", "center");
                 text.setAttribute("width", "12");
                 text.setAttribute("scale", "4 4 2");
@@ -114,7 +114,7 @@
                 text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
                 text.setAttribute("negate", "false");
 
-                // 動的幅計算
+                // 動的幅計算（テキストの幅に合わせて背景の幅を調整）
                 const textWidth = lastWord.length * 3; // Adjust factor as needed
                 background.setAttribute("width", textWidth);
                 background.setAttribute("height", "3");
