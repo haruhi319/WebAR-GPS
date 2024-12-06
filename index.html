@@ -78,7 +78,7 @@
 
                 const background = document.createElement("a-plane");
                 background.setAttribute("color", "white");
-                background.setAttribute("position", "0 12 0"); // 背景を少し上に
+                background.setAttribute("position", "0 15 0"); // 背景を少し上に
                 background.setAttribute("look-at", "[gps-camera]");
                 background.setAttribute("depth", "0.1"); // Z軸で奥行き調整
 
@@ -87,7 +87,7 @@
                 text.setAttribute("color", "black");
                 text.setAttribute("align", "center");
                 text.setAttribute("scale", "18 18 18");
-                text.setAttribute("position", "0 12 0"); // テキストを背景の上に配置
+                text.setAttribute("position", "0 15 0"); // テキストを背景の上に配置
                 text.setAttribute("look-at", "[gps-camera]");
 
                 // 日本語フォントの設定
@@ -96,9 +96,9 @@
                 text.setAttribute("negate", "false");
 
                 // テキストの幅を取得して背景の幅を動的に調整
-                const textWidth = lastWord.length * 3; // 長さに基づく計算（調整可能）
+                const textWidth = lastWord.length * 5; // 長さに基づく計算（調整可能）
                 background.setAttribute("width", textWidth); // 背景の幅をテキストに合わせる
-                background.setAttribute("height", "10"); // 高さは固定
+                background.setAttribute("height", "6"); // 高さは固定
 
                 entity.appendChild(image);
                 entity.appendChild(background);
