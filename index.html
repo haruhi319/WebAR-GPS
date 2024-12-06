@@ -46,7 +46,7 @@
         // ボタンを無効化
         document.getElementById("start-button").disabled = true;
       });
-      
+
       function updateLocation() {
         navigator.geolocation.getCurrentPosition(function (position) {
           const userLat = position.coords.latitude;
@@ -64,25 +64,23 @@
               
               data.features.forEach((feature, index) => {
                 const { attributes, geometry } = feature;
-
                 const lat = geometry.y;
                 const lng = geometry.x;
-
                 const nameParts = attributes.name.split(/[\s　,\-]+/); // Handles spaces and common delimiters
                 const lastWord = nameParts[nameParts.length - 1];
 
-  // エンティティの作成
+                // エンティティの作成
                 const entity = document.createElement("a-entity");
                 entity.setAttribute("gps-entity-place", `latitude: ${lat}; longitude: ${lng}`);
 
-  // 画像要素の作成
+                // 画像要素の作成
                 const image = document.createElement("a-image");
                 image.setAttribute("src", "https://haruhi319.github.io/WebAR-GPS/pin.png");
                 image.setAttribute("position", "0 1 0");
                 image.setAttribute("look-at", "[gps-camera]");
                 image.setAttribute("scale", "16 16 16");
 
-                // 確認のためのデバッグ
+                // 画像のロード確認
                 image.onload = function() {
                   console.log("Image loaded successfully");
                 };
@@ -90,13 +88,13 @@
                   console.error("Error loading image");
                 };
 
-  // 背景要素の作成
+                // 背景要素の作成
                 const background = document.createElement("a-plane");
                 background.setAttribute("color", "white");
                 background.setAttribute("position", "0 12 0");
                 background.setAttribute("look-at", "[gps-camera]");
                 
-  // テキスト要素の作成
+                // テキスト要素の作成
                 const text = document.createElement("a-text");
                 text.setAttribute("value", lastWord); // 抽出した文字列
                 text.setAttribute("color", "black");
@@ -106,22 +104,22 @@
                 text.setAttribute("position", "0 12 0");
                 text.setAttribute("look-at", "[gps-camera]");
 
-  // フォントの指定
+                // フォントの指定
                 text.setAttribute("font", "noto-sans-cjk-jp-msdf.json");
                 text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
                 text.setAttribute("negate", "false");
 
-  // 動的幅計算
+                // 動的幅計算
                 const textWidth = lastWord.length * 3; // Adjust factor as needed
                 background.setAttribute("width", textWidth);
                 background.setAttribute("height", "3");
 
-  // 子要素を親エンティティに追加
+                // 子要素を親エンティティに追加
                 entity.appendChild(image);       // 画像
                 entity.appendChild(background);  // 背景
                 entity.appendChild(text);        // テキスト
 
-  // a-scene にエンティティを追加
+                // a-scene にエンティティを追加
                 scene.appendChild(entity);
               });
             })
@@ -130,9 +128,6 @@
           console.error('Geolocation error:', error);
         });
       };
-
-      // Automatically update location every 3 seconds
-      setInterval(updateLocation, 3000);
     </script>
   </body>
 </html>
