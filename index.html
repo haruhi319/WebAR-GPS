@@ -82,6 +82,14 @@
                 image.setAttribute("look-at", "[gps-camera]");
                 image.setAttribute("scale", "16 16 16");
 
+                // 確認のためのデバッグ
+                image.onload = function() {
+                  console.log("Image loaded successfully");
+                };
+                image.onerror = function() {
+                  console.error("Error loading image");
+                };
+
   // 背景要素の作成
                 const background = document.createElement("a-plane");
                 background.setAttribute("color", "white");
