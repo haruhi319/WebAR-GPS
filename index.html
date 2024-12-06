@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale: 1.0, minimum-scale: 1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">  
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <script
@@ -22,7 +22,6 @@
         box-sizing: border-box;
         overflow: hidden;
       }
-      /* フルスクリーン表示 */
       body {
         margin: 0;
         height: 100%;
@@ -33,6 +32,19 @@
       a-scene {
         height: 100%;
         width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      #start-button {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 999;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 5px;
       }
     </style>
   </head>
@@ -40,8 +52,8 @@
     <button id="start-button">位置情報を取得</button>
     <a-scene
         vr-mode-ui="enabled: false"
-        arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false"
-        renderer="antialias: true; alpha: true;" <!-- alphaをtrueにしてカメラ映像を表示 -->
+        arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: true;" <!-- デバッグUIを有効に -->
+        renderer="antialias: true; alpha: true;"  <!-- alphaをtrueにして透明背景 -->
     >
       <a-camera orientation-controls gps-camera="minDistance: 1; maxDistance: 1000;"></a-camera>
     </a-scene>
@@ -74,7 +86,7 @@
                 // Clear previous entities before adding new ones
                 const existingEntities = scene.querySelectorAll("a-entity");
                 existingEntities.forEach(entity => entity.remove());
-                
+
                 data.features.forEach((feature, index) => {
                   const { attributes, geometry } = feature;
 
@@ -97,39 +109,26 @@
                   image.setAttribute("look-at", "[gps-camera]");
                   image.setAttribute("scale", "16 16 16");
 
-                  // 画像のロード確認
-                  image.onload = function() {
-                    console.log("Image loaded successfully");
-                  };
-                  image.onerror = function() {
-                    console.error("Error loading image");
-                  };
-
-                  // 背景要素の作成（透明背景に変更）
+                  // 背景要素の作成
                   const background = document.createElement("a-plane");
-                  background.setAttribute("color", "transparent");  // 背景を透明に
+                  background.setAttribute("color", "white");  // 背景色を白に変更
                   background.setAttribute("position", "0 12 0");
                   background.setAttribute("look-at", "[gps-camera]");
-                  
+                  background.setAttribute("width", "12");
+                  background.setAttribute("height", "4");
+
                   // テキスト要素の作成
                   const text = document.createElement("a-text");
                   text.setAttribute("value", lastWord); // 抽出した文字列
-                  text.setAttribute("color", "white");  // テキストを白に変更
+                  text.setAttribute("color", "black");  // テキストの色を黒に
                   text.setAttribute("align", "center");
-                  text.setAttribute("width", "12");
-                  text.setAttribute("scale", "6 6 3");
+                  text.setAttribute("scale", "4 4 2");
                   text.setAttribute("position", "0 12 0");  // Adjust position for visibility
                   text.setAttribute("look-at", "[gps-camera]");
 
                   // フォントの指定
                   text.setAttribute("font", "noto-sans-cjk-jp-msdf.json");
                   text.setAttribute("font-image", "noto-sans-cjk-jp-msdf.png");
-                  text.setAttribute("negate", "false");
-
-                  // 動的幅計算（テキストの幅に合わせて背景の幅を調整）
-                  const textWidth = lastWord.length * 4; // Adjust factor as needed
-                  background.setAttribute("width", textWidth);
-                  background.setAttribute("height", "3");
 
                   // 子要素を親エンティティに追加
                   entity.appendChild(image);       // 画像
