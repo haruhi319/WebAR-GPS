@@ -86,7 +86,7 @@
                 text.setAttribute("value", lastWord); // 日本語テキストを設定
                 text.setAttribute("color", "black");
                 text.setAttribute("align", "center");
-                text.setAttribute("scale", "20 20 20");
+                text.setAttribute("scale", "18 18 18");
                 text.setAttribute("position", "0 12 0"); // テキストを背景の上に配置
                 text.setAttribute("look-at", "[gps-camera]");
 
@@ -96,9 +96,9 @@
                 text.setAttribute("negate", "false");
 
                 // テキストの幅を取得して背景の幅を動的に調整
-                const textWidth = lastWord.length * 1.2; // 長さに基づく計算（調整可能）
+                const textWidth = lastWord.length * 3; // 長さに基づく計算（調整可能）
                 background.setAttribute("width", textWidth); // 背景の幅をテキストに合わせる
-                background.setAttribute("height", "3"); // 高さは固定
+                background.setAttribute("height", "10"); // 高さは固定
 
                 entity.appendChild(image);
                 entity.appendChild(background);
